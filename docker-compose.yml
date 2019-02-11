@@ -1,0 +1,22 @@
+version: '3.6'
+
+volumes:
+  cargo-home:
+
+services:
+  app:
+    image: rust
+    hostname: "rust"
+    volumes:
+      - ./:/app
+      - "cargo-home:/usr/local/cargo/"
+    restart: unless-stopped
+    working_dir: "/app"
+    entrypoint: "tail -f /dev/null"
+  testapp:
+    image: alpine
+    volumes:
+      - ./:/app
+    restart: unless-stopped
+    working_dir: "/app"
+    entrypoint: "tail -f /dev/null"

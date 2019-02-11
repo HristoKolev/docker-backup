@@ -1,0 +1,9 @@
+[package]
+name = "docker-backup"
+version = "0.1.0"
+authors = ["Hristo Kolev <hristo.a.kolev@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+shiplift = "0.4"
+tokio = "0.1.15"
