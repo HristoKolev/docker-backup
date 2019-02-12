@@ -1,27 +1,39 @@
+#![feature(await_macro, async_await, futures_api)]
+
+extern crate tokio;
+
+use tokio::await;
 use shiplift::Docker;
-use tokio::prelude::Future;
-use std::time::Duration;
+use std::env;
 
 fn main() {
+    tokio::run_async(main_async());
+}
+
+async fn main_async () {
+
+    let args: Vec<String> = env::args().skip(1).collect();
+
+    let container_name;
+
+    match args.first() {
+        Some(res) => container_name = res,
+        None => {
+            println!("You must provide a container name.");
+            std::process::exit(1);
+        }
+    }
 
     let docker = Docker::new();
 
     let containers = docker.containers();
 
-    let d6 = containers.get("kfc_app_1");
+    let d6 = containers.get(container_name);
 
-    d6.stop(Some(Duration::from_secs(10))).wait().unwrap();
+    let res =  await!(d6.start());
 
-
-//      let containers = docker
-//        .containers()
-//          .list((&Default::default()))
-//            .map(|containers| {
-//                for c in containers {
-//                    println!("container -> {}", c.names.first().unwrap())
-//                }
-//            })
-//            .map_err(|e| eprintln!("Error: {}", e)).wait().unwrap();
-
-
+    match res {
+        Ok(res) => println!("OK: {:?}", res),
+        Err(err) => println!("ERR: {:?}", err)
+    }
 }
