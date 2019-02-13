@@ -10,30 +10,37 @@ fn main() {
     tokio::run_async(main_async());
 }
 
+fn exit_with_error(message: &str) {
+    println!("{}", message);
+    std::process::exit(1);
+}
+
 async fn main_async () {
 
     let args: Vec<String> = env::args().skip(1).collect();
 
-    let container_name;
+    let volume_name;
 
     match args.first() {
-        Some(res) => container_name = res,
+        Some(res) => volume_name = res,
         None => {
-            println!("You must provide a container name.");
-            std::process::exit(1);
+            exit_with_error("You must provide a volume name.")
         }
     }
 
     let docker = Docker::new();
 
-    let containers = docker.containers();
+    let containers;
 
-    let d6 = containers.get(container_name);
 
-    let res =  await!(d6.start());
-
-    match res {
-        Ok(res) => println!("OK: {:?}", res),
-        Err(err) => println!("ERR: {:?}", err)
+    match await!(docker.containers().list(&Default::default())) {
+        Ok(res) => containers = res,
+        Err(err) => exit_with_error(err)
     }
+
+
+
+    println!("{}", containers);
+
+
 }
