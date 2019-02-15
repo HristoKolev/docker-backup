@@ -10,8 +10,8 @@ fn main() {
     tokio::run_async(main_async());
 }
 
-fn exit_with_error(message: &str) {
-    println!("{}", message);
+fn exit_with_error(printable: &str) -> ! {
+    println!("{}", printable);
     std::process::exit(1);
 }
 
@@ -24,23 +24,29 @@ async fn main_async () {
     match args.first() {
         Some(res) => volume_name = res,
         None => {
-            exit_with_error("You must provide a volume name.")
+            exit_with_error("You must provide a volume name.");
         }
     }
 
-    let docker = Docker::new();
+    println!("{}", volume_name);
 
-    let containers;
+    let docker = Docker::host("http://dev-host.lan:2376".parse().unwrap());
 
+    let containers : Vec<shiplift::rep::Container>;
 
     match await!(docker.containers().list(&Default::default())) {
         Ok(res) => containers = res,
-        Err(err) => exit_with_error(err)
+        Err(_) => {
+            exit_with_error("An error occurred while listing the containers.");
+        }
     }
 
+    let container ;
 
+    match containers.first() {
+        Ok(res) => container = res,
+        Err(_) => exit_with_error(format!("No container found for name `{}`", cont))
+    }
 
-    println!("{}", containers);
-
-
+    println!("{:#?}", containers.first().unwrap());
 }
