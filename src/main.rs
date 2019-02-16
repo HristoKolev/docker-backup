@@ -4,7 +4,7 @@ extern crate tokio;
 
 use tokio::await;
 use shiplift::Docker;
-use std::env;
+
 
 fn main() {
     tokio::run_async(main_async());
@@ -17,36 +17,21 @@ fn exit_with_error(printable: &str) -> ! {
 
 async fn main_async () {
 
-    let args: Vec<String> = env::args().skip(1).collect();
-
-    let volume_name;
-
-    match args.first() {
-        Some(res) => volume_name = res,
-        None => {
-            exit_with_error("You must provide a volume name.");
-        }
-    }
-
-    println!("{}", volume_name);
-
     let docker = Docker::host("http://dev-host.lan:2376".parse().unwrap());
 
-    let containers : Vec<shiplift::rep::Container>;
+    let docker_containers = docker.containers();
+    
+    let container_list : Vec<shiplift::rep::Container> = await!(
+        docker_containers.list(&Default::default())
+    ).expect("There was an error while listing the containers.");
 
-    match await!(docker.containers().list(&Default::default())) {
-        Ok(res) => containers = res,
-        Err(_) => {
-            exit_with_error("An error occurred while listing the containers.");
-        }
+    for container_rep in container_list {
+
+        let container = docker_containers.get(&container_rep.id);
+
+        let inspect = await!(container.inspect());
+
+        //let inspect = await!(container_rep.inspect());
+        println!("container -> {:#?}", inspect);
     }
-
-    let container ;
-
-    match containers.first() {
-        Ok(res) => container = res,
-        Err(_) => exit_with_error(format!("No container found for name `{}`", cont))
-    }
-
-    println!("{:#?}", containers.first().unwrap());
 }
