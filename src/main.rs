@@ -19,19 +19,19 @@ async fn main_async () {
 
     let docker = Docker::host("http://dev-host.lan:2376".parse().unwrap());
 
-    let docker_containers = docker.containers();
+    let volume_mountpoints : Vec<shiplift::rep::Volume> = await!(
+        docker.volumes().list()
+    ).expect("There was an error while listing the volumes.");
+
     
-    let container_list : Vec<shiplift::rep::Container> = await!(
-        docker_containers.list(&Default::default())
-    ).expect("There was an error while listing the containers.");
 
-    for container_rep in container_list {
-
-        let container = docker_containers.get(&container_rep.id);
-
-        let inspect = await!(container.inspect());
-
-        //let inspect = await!(container_rep.inspect());
-        println!("container -> {:#?}", inspect);
-    }
+//    let container_list = await!(
+//        docker.containers().list(&Default::default())
+//    ).expect("There was an error while listing the containers.");
+//
+//    for container_rep in container_list {
+//        let container = docker.containers().get(&container_rep.id);
+//        let inspect = await!(container.inspect());
+//        println!("container -> {:#?}", inspect);
+//    }
 }
