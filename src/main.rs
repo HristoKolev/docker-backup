@@ -17,13 +17,23 @@ fn exit_with_error(printable: &str) -> ! {
 
 async fn main_async () {
 
-    let docker = Docker::host("http://dev-host.lan:2376".parse().unwrap());
+    let nums = vec![1, 2, 3];
 
-    let volume_mountpoints : Vec<shiplift::rep::Volume> = await!(
-        docker.volumes().list()
-    ).expect("There was an error while listing the volumes.");
+    let mult : Vec<i32> = nums
+        .iter()
+        .map(|x| x * x)
+        .filter(|x:&i32| x > 2)
+        .collect();
 
-    
+    println!("{:#?}", mult);
+
+//    let docker = Docker::host("http://dev-host.lan:2376".parse().unwrap());
+//
+//    let volume_mountpoints : Vec<shiplift::rep::Volume> = await!(
+//        docker.volumes().list()
+//    ).expect("There was an error while listing the volumes.");
+
+
 
 //    let container_list = await!(
 //        docker.containers().list(&Default::default())
