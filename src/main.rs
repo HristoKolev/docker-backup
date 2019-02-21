@@ -7,6 +7,7 @@ use shiplift::Docker;
 use shiplift::rep::Volume as VolumeRep;
 use shiplift::rep::Container as ContainerRep;
 use shiplift::rep::ContainerDetails as ContainerDetailsRep;
+use shiplift::rep::ContainerDetails;
 
 fn main() {
 
@@ -23,9 +24,19 @@ async fn main_async () {
 
     let container_details = await!(get_container_details(&docker));
 
+    let mut connected_containers = Vec::new();
+
+    for container_detail in container_details {
+        for mount in container_detail.mounts {
+            if mount.destination == volume.mountpoint {
+                connected_containers.push(container_detail);
+            }
+        }
+    }
+
     //let connected_containers = container_details.into_iter().filter()
 
-    println!("{:#?}", container_details);
+    println!("{:#?}", connected_containers);
 
     // println!("{:#?}", volume_mountpoints);
 
@@ -64,26 +75,26 @@ async fn get_volume_by_name<'a> (docker: &'a Docker, volume_name: &'a str) -> Vo
         .into_iter()
         .filter(|x| x.name == volume_name)
         .nth(0)
-        .expect(&format!("No volume found for name `{}`", volume_name));
+        .expect(&format!("No volume found for name `{}`.", volume_name));
 
     volume
 }
 
 async fn get_container_details(docker: &Docker) -> Vec<ContainerDetailsRep> {
 
-    let containers_rep: Vec<ContainerRep> = await!(
+    let container_reps: Vec<ContainerRep> = await!(
         docker.containers()
             .list(&Default::default())
     ).expect("There was an error while listing the containers.");
 
     let mut connected_containers = Vec::new();
 
-    for container_rep in containers_rep {
+    for container_rep in container_reps {
 
         let container = docker.containers().get(&container_rep.id);
 
         let detailed_container = await!(container.inspect())
-            .expect(&format!("There was an error while getting details for container {}", container_rep.id));
+            .expect(&format!("There was an error while getting details for container `{}`.", container_rep.id));
 
         connected_containers.push(detailed_container);
     }
