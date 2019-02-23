@@ -3,11 +3,12 @@
 extern crate tokio;
 
 use tokio::await;
+
 use shiplift::Docker;
-use shiplift::rep::Volume as VolumeRep;
+
 use shiplift::rep::Container as ContainerRep;
 use shiplift::rep::ContainerDetails as ContainerDetailsRep;
-use shiplift::rep::ContainerDetails;
+use shiplift::rep::Volume as VolumeRep;
 
 fn main() {
 
@@ -22,29 +23,11 @@ async fn main_async () {
 
     let volume = await!(get_volume_by_name(&docker, &volume_name));
 
-    let container_details = await!(get_container_details(&docker));
+    let container_details = await!(get_connected_containers(&docker, &volume));
 
-    let mut connected_containers = Vec::new();
+    
 
-    for container_detail in container_details {
-        for mount in container_detail.mounts {
-            if mount.destination == volume.mountpoint {
-                connected_containers.push(container_detail);
-            }
-        }
-    }
-
-    //let connected_containers = container_details.into_iter().filter()
-
-    println!("{:#?}", connected_containers);
-
-    // println!("{:#?}", volume_mountpoints);
-
-//    let container_list = await!(
-//        docker.containers().list(&Default::default())
-//    ).expect("There was an error while listing the containers.");
-//
-//
+    println!("{:#?}", container_details);
 }
 
 fn get_volume_name() -> String {
@@ -80,7 +63,7 @@ async fn get_volume_by_name<'a> (docker: &'a Docker, volume_name: &'a str) -> Vo
     volume
 }
 
-async fn get_container_details(docker: &Docker) -> Vec<ContainerDetailsRep> {
+async fn get_connected_containers<'a>(docker: &'a Docker, volume: &'a VolumeRep) -> Vec<ContainerDetailsRep> {
 
     let container_reps: Vec<ContainerRep> = await!(
         docker.containers()
@@ -93,10 +76,16 @@ async fn get_container_details(docker: &Docker) -> Vec<ContainerDetailsRep> {
 
         let container = docker.containers().get(&container_rep.id);
 
-        let detailed_container = await!(container.inspect())
+        let container_detail = await!(container.inspect())
             .expect(&format!("There was an error while getting details for container `{}`.", container_rep.id));
 
-        connected_containers.push(detailed_container);
+        for mount in &container_detail.mounts {
+
+            if mount.source == volume.mountpoint {
+
+                connected_containers.push(container_detail.clone());
+            }
+        }
     }
 
     connected_containers
