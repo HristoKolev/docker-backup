@@ -15,7 +15,32 @@ fn main() {
     tokio::run_async(main_async());
 }
 
+#[derive(Debug)]
+struct Cat {
+    age: i32,
+    name: String,
+}
+
+impl Cat {
+    pub fn new() -> Cat {
+        Cat{
+            name: "Zay".to_string(),
+            age: 2
+        }
+    }
+}
+
+
 async fn main_async () {
+
+    let cat = Cat {
+        age: 1,
+        name: "Keks".to_string()
+    };
+
+    println!("{:#?}", cat);
+
+
 
     let volume_name = get_volume_name();
 
@@ -26,8 +51,6 @@ async fn main_async () {
     let container_details = await!(get_connected_containers(&docker, &volume));
 
     println!("{:#?}", container_details);
-
-
 }
 
 fn get_volume_name() -> String {
