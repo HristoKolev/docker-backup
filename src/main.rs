@@ -2,6 +2,8 @@
 
 extern crate tokio;
 
+use std::error::Error;
+
 use tokio::await;
 
 use shiplift::Docker;
@@ -15,38 +17,13 @@ fn main() {
     tokio::run_async(main_async());
 }
 
-#[derive(Debug)]
-struct Cat {
-    age: i32,
-    name: String,
-}
-
-impl Cat {
-    pub fn new() -> Cat {
-        Cat{
-            name: "Zay".to_string(),
-            age: 2
-        }
-    }
-}
-
-
 async fn main_async () {
-
-    let cat = Cat {
-        age: 1,
-        name: "Keks".to_string()
-    };
-
-    println!("{:#?}", cat);
-
-
 
     let volume_name = get_volume_name();
 
     let docker = create_client();
 
-    let volume = await!(get_volume_by_name(&docker, &volume_name));
+    let volume = await!(get_volume_by_name(&docker, &volume_name)).unwrap();
 
     let container_details = await!(get_connected_containers(&docker, &volume));
 
@@ -70,7 +47,7 @@ fn create_client () -> Docker {
     docker
 }
 
-async fn get_volume_by_name<'a> (docker: &'a Docker, volume_name: &'a str) -> VolumeRep {
+async fn get_volume_by_name<'a> (docker: &'a Docker, volume_name: &'a str) -> Result<VolumeRep, Error> {
 
     let volume_mountpoints : Vec<_> = await!(docker.volumes().list())
         .expect("There was an error while listing the volumes.");
@@ -81,7 +58,7 @@ async fn get_volume_by_name<'a> (docker: &'a Docker, volume_name: &'a str) -> Vo
         .nth(0)
         .expect(&format!("No volume found for name `{}`.", volume_name));
 
-    volume
+    Ok(volume)
 }
 
 async fn get_connected_containers<'a>(docker: &'a Docker, volume: &'a VolumeRep) -> Vec<ContainerDetailsRep> {
