@@ -1,22 +1,31 @@
 use std::process::{Command, Stdio};
 use std::io::{BufReader, BufRead, Write};
-use std::thread;
+use std::{thread};
+use std::any::Any;
+use std::result::Result;
+
+#[macro_use]
+extern crate derive_more;
 
 fn main() {
 
-    let res = exec("echo 123");
-
-    println!("{:#?}", res);
+   match exec("echo 123") {
+       Ok(res) => {
+           println!("{:#?}", res);
+       },
+       Err(err) => {
+           println!("{:#?}", err);
+       }
+   }
 }
 
-fn exec(command: &str) -> CommandResult {
+fn exec(command: &str) -> Result<CommandResult, GeneralError> {
 
     let mut process = Command::new("/bin/bash")
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .stdin(Stdio::piped())
-        .spawn()
-        .expect("failed to spawn a process.");
+        .spawn()?;
 
     let stdout = process.stdout.take().unwrap();
     let stderr = process.stderr.take().unwrap();
@@ -28,13 +37,18 @@ fn exec(command: &str) -> CommandResult {
 
         let mut result = String::new();
 
-        for line in buff.lines() {
-            let formatted = format!("OUT | {}\n", line.unwrap());
-            result.push_str(&formatted);
-            write_to_out(&formatted);
+        for line_result in buff.lines() {
+            match line_result {
+                Ok(line) => {
+                    let formatted = format!("OUT | {}\n", line);
+                    result.push_str(&formatted);
+                    write_to_out(&formatted);
+                },
+                Err(err) => return Err(err)
+            }
         }
 
-        result
+        Ok(result)
     });
 
     let std_err_thread= thread::spawn(move || {
@@ -43,29 +57,35 @@ fn exec(command: &str) -> CommandResult {
 
         let mut result = String::new();
 
-        for line in buff.lines() {
-            let formatted = format!("ERR | {}\n", line.unwrap());
-            result.push_str(&formatted);
-            write_to_err(&formatted);
+        for line_result in buff.lines() {
+            match line_result {
+                Ok(line) => {
+                    let formatted = format!("ERR | {}\n", line);
+                    result.push_str(&formatted);
+                    write_to_err(&formatted);
+                },
+                Err(err) => return Err(err)
+            }
         }
 
-        result
+        Ok(result)
     });
 
-    stdin.write_all("set -exu\n".as_bytes()).unwrap();
-    stdin.write_all(format!("{}\n", command).as_bytes()).unwrap();
-    stdin.write_all("exit $?;\n".as_bytes()).unwrap();
+    stdin.write_all("set -exu\n".as_bytes())?;
+    stdin.write_all(format!("{}\n", command).as_bytes())?;
+    stdin.write_all("exit $?;\n".as_bytes())?;
 
-    let out_result = std_out_thread.join().unwrap();
-    let err_result = std_err_thread.join().unwrap();
+    let out_result = std_out_thread.join()??;
+    let err_result = std_err_thread.join()??;
 
-    let exit_status = process.wait().unwrap();
+    let exit_status = process.wait()?;
 
-    return CommandResult {
-        status: exit_status.code().unwrap(),
+    return Ok(CommandResult {
+        status_code: exit_status.code(),
+        success: exit_status.success(),
         stdout: out_result,
         stderr: err_result,
-    };
+    });
 }
 
 fn write_to_out (text: &str){
@@ -78,7 +98,14 @@ fn write_to_err(text: &str) {
 
 #[derive(Debug)]
 struct CommandResult {
-    status: i32,
+    status_code: Option<i32>,
     stdout: String,
     stderr: String,
+    success: bool,
+}
+
+#[derive(From, Debug)]
+enum GeneralError {
+    IoError(std::io::Error),
+    Dynamic(Box<dyn Any + Send + 'static>)
 }
