@@ -3,12 +3,12 @@ use std::io::{BufReader, BufRead, Write};
 use std::{thread};
 use std::any::Any;
 use std::result::Result;
+use std::thread::JoinHandle;
 
 #[macro_use]
 extern crate derive_more;
 
 fn main() {
-
    match exec("echo 123") {
        Ok(res) => {
            println!("{:#?}", res);
@@ -31,41 +31,35 @@ fn exec(command: &str) -> Result<CommandResult, GeneralError> {
     let stderr = process.stderr.take().unwrap();
     let stdin = process.stdin.as_mut().unwrap();
 
-    let std_out_thread= thread::spawn(|| {
+    let stdout_thread : JoinHandle<Result<String, GeneralError>> = thread::spawn(|| {
 
         let buff = BufReader::new(stdout);
 
         let mut result = String::new();
 
         for line_result in buff.lines() {
-            match line_result {
-                Ok(line) => {
-                    let formatted = format!("OUT | {}\n", line);
-                    result.push_str(&formatted);
-                    write_to_out(&formatted);
-                },
-                Err(err) => return Err(err)
-            }
+
+            let line = line_result?;
+            let formatted = format!("OUT | {}\n", line);
+            result.push_str(&formatted);
+            write_to_out(&formatted);
         }
 
         Ok(result)
     });
 
-    let std_err_thread= thread::spawn(|| {
+    let stderr_thread : JoinHandle<Result<String, GeneralError>> = thread::spawn(|| {
 
         let buff = BufReader::new(stderr);
 
         let mut result = String::new();
 
         for line_result in buff.lines() {
-            match line_result {
-                Ok(line) => {
-                    let formatted = format!("ERR | {}\n", line);
-                    result.push_str(&formatted);
-                    write_to_err(&formatted);
-                },
-                Err(err) => return Err(err)
-            }
+
+            let line = line_result?;
+            let formatted = format!("ERR | {}\n", line);
+            result.push_str(&formatted);
+            write_to_err(&formatted);
         }
 
         Ok(result)
@@ -75,8 +69,8 @@ fn exec(command: &str) -> Result<CommandResult, GeneralError> {
     stdin.write_all(format!("{}\n", command).as_bytes())?;
     stdin.write_all("exit $?;\n".as_bytes())?;
 
-    let out_result = std_out_thread.join()??;
-    let err_result = std_err_thread.join()??;
+    let out_result = stdout_thread.join()??;
+    let err_result = stderr_thread.join()??;
 
     let exit_status = process.wait()?;
 
@@ -107,5 +101,6 @@ struct CommandResult {
 #[derive(From, Debug)]
 enum GeneralError {
     IoError(std::io::Error),
-    Dynamic(Box<dyn Any + Send + 'static>)
+    Dynamic(Box<dyn Any + Send + 'static>),
+    ParseInt(std::num::ParseIntError),
 }
