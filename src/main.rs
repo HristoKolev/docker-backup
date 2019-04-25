@@ -31,7 +31,7 @@ fn exec(command: &str) -> Result<CommandResult, GeneralError> {
     let stderr = process.stderr.take().unwrap();
     let stdin = process.stdin.as_mut().unwrap();
 
-    let std_out_thread= thread::spawn(move || {
+    let std_out_thread= thread::spawn(|| {
 
         let buff = BufReader::new(stdout);
 
@@ -51,7 +51,7 @@ fn exec(command: &str) -> Result<CommandResult, GeneralError> {
         Ok(result)
     });
 
-    let std_err_thread= thread::spawn(move || {
+    let std_err_thread= thread::spawn(|| {
 
         let buff = BufReader::new(stderr);
 
