@@ -2,19 +2,26 @@ use std::process::{Command, Stdio};
 use std::thread::JoinHandle;
 use std::thread;
 use std::io::{BufReader, Write, BufRead};
-use crate::errors::GeneralError;
+
+use crate::errors::{GeneralError, DetailedError};
 
 pub fn exec(command: &str) -> Result<CommandResult, GeneralError> {
 
-    let mut process = Command::new("/bin/bash")
+    let mut process = Command::new("/usr/bin/env")
+        .arg("bash")
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .stdin(Stdio::piped())
         .spawn()?;
 
-    let stdout = process.stdout.take().unwrap();
-    let stderr = process.stderr.take().unwrap();
-    let stdin = process.stdin.as_mut().unwrap();
+    let stdout = process.stdout.take()
+        .ok_or_else(|| DetailedError::new("stdout was not redirected.".to_string()))?;
+
+    let stderr = process.stderr.take()
+        .ok_or_else(|| DetailedError::new("stderr was not redirected.".to_string()))?;
+
+    let stdin = process.stdin.as_mut()
+        .ok_or_else(|| DetailedError::new("stdin was not redirected.".to_string()))?;
 
     let stdout_thread : JoinHandle<Result<String, GeneralError>> = thread::spawn(|| {
 
@@ -27,7 +34,7 @@ pub fn exec(command: &str) -> Result<CommandResult, GeneralError> {
             let line = line_result?;
             let formatted = format!("OUT | {}\n", line);
             result.push_str(&formatted);
-            write_to_out(&formatted);
+            write_out(&formatted);
         }
 
         Ok(result)
@@ -44,7 +51,7 @@ pub fn exec(command: &str) -> Result<CommandResult, GeneralError> {
             let line = line_result?;
             let formatted = format!("ERR | {}\n", line);
             result.push_str(&formatted);
-            write_to_err(&formatted);
+            write_err(&formatted);
         }
 
         Ok(result)
@@ -60,25 +67,53 @@ pub fn exec(command: &str) -> Result<CommandResult, GeneralError> {
     let exit_status = process.wait()?;
 
     return Ok(CommandResult {
+
         status_code: exit_status.code(),
+
         success: exit_status.success(),
+
         stdout: out_result,
+
         stderr: err_result,
+
+        command: command.to_string()
     });
 }
 
-fn write_to_out (text: &str){
+fn write_out(text: &str){
+
     print!("{}", text);
 }
 
-fn write_to_err(text: &str) {
+fn write_err(text: &str) {
+
     eprint!("{}", text);
 }
 
 #[derive(Debug)]
 pub struct CommandResult {
-    status_code: Option<i32>,
-    stdout: String,
-    stderr: String,
-    success: bool,
+
+    pub status_code: Option<i32>,
+
+    pub stdout: String,
+
+    pub stderr: String,
+
+    pub command: String,
+
+    pub success: bool,
+}
+
+impl CommandResult {
+
+    //noinspection RsSelfConvention
+    pub fn as_result(self) -> Result<CommandResult, DetailedError> {
+        if self.success {
+            Ok(self)
+        } else {
+            Err(DetailedError::new(
+                "A command exited with a non 0 exit code or with a signal.".to_string()
+            ))
+        }
+    }
 }
