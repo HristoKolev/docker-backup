@@ -1,11 +1,19 @@
 use std::any::Any;
-use std::error;
+use crate::errors::GeneralError::{IoError, Dynamic, Detailed};
 
 #[derive(Debug, From)]
 pub enum GeneralError {
     IoError(std::io::Error),
     Dynamic(Box<dyn Any + Send + 'static>),
     Detailed(DetailedError),
+}
+
+pub fn handle_error(error: GeneralError) {
+    match error {
+        IoError(io) => print!("{:#?}", io),
+        Dynamic(dy) => print!("{:#?}", dy),
+        Detailed(detail) => print!("{:#?}", detail),
+    }
 }
 
 #[derive(Debug, Display, Clone)]
@@ -21,8 +29,9 @@ impl DetailedError {
     }
 }
 
-impl error::Error for DetailedError {
+impl std::error::Error for DetailedError {
     fn description(&self) -> &str {
         &self.message
     }
 }
+

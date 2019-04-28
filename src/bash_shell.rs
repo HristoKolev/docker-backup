@@ -111,9 +111,10 @@ impl CommandResult {
         if self.success {
             Ok(self)
         } else {
-            Err(DetailedError::new(
-                "A command exited with a non 0 exit code or with a signal.".to_string()
-            ))
+            Err(DetailedError::new(format!(
+                "A command exited with a non 0 exit code or with a signal. '{}'",
+                self.command
+            )))
         }
     }
 }

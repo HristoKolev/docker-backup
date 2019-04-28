@@ -1,33 +1,25 @@
 #[macro_use]
 extern crate derive_more;
 
-use crate::errors::GeneralError;
-use crate::errors::GeneralError::{Dynamic, Detailed, IoError};
+use crate::errors::{GeneralError, handle_error};
 
 mod bash_shell;
 mod errors;
 
 fn main() {
 
-    let res = main_result();
+    let result = main_result();
 
-    match res {
-       Ok(_) => {},
-       Err(general_error) => {
-           match general_error {
-               IoError(io) => print!("{:#?}", io),
-               Dynamic(dy) => print!("{:#?}", dy),
-               Detailed(detail) => print!("{:#?}", detail),
-           }
-       }
+    if let Err(error) = result {
+        handle_error(error)
     }
 }
 
 fn main_result () -> Result<(), GeneralError> {
 
-    let res = bash_shell::exec("echo 123")?.as_result();
+    let result = bash_shell::exec("docker ps")?.as_result()?;
 
-    println!("{:#?}", res.unwrap());
+    println!("{:#?}", result);
 
     Ok(())
 }
