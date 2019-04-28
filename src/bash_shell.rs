@@ -32,9 +32,8 @@ pub fn exec(command: &str) -> Result<CommandResult, GeneralError> {
         for line_result in buff.lines() {
 
             let line = line_result?;
-            let formatted = format!("OUT | {}\n", line);
-            result.push_str(&formatted);
-            write_out(&formatted);
+            result.push_str(&format!("{}\n", line));
+            write_out(&format!("OUT | {}\n", line));
         }
 
         Ok(result)
@@ -49,9 +48,8 @@ pub fn exec(command: &str) -> Result<CommandResult, GeneralError> {
         for line_result in buff.lines() {
 
             let line = line_result?;
-            let formatted = format!("ERR | {}\n", line);
-            result.push_str(&formatted);
-            write_err(&formatted);
+            result.push_str(&format!("{}\n", line));
+            write_err(&format!("ERR | {}\n", line));
         }
 
         Ok(result)
