@@ -26,22 +26,22 @@ pub fn main_result () -> Result<(), GeneralError> {
 
     do_try::run(|| {
 
-        bash_shell::exec(&format!("rsync -a {}/ {}/", volumes_path, volumes_copy_path))?.as_result()?;
+        do_try::run(|| {
 
-        bash_shell::exec(&format!("docker pause {}", ps_result.stdout))?.as_result()?;
+            bash_shell::exec(&format!("rsync -a {}/ {}/", volumes_path, volumes_copy_path))?.as_result()?;
 
-        bash_shell::exec(&format!("rsync -a {}/ {}/", volumes_path, volumes_copy_path))?.as_result()?;
+            bash_shell::exec(&format!("docker pause {}", ps_result.stdout))?.as_result()?;
 
-        Ok(())
+            bash_shell::exec(&format!("rsync -a {}/ {}/", volumes_path, volumes_copy_path))?.as_result()?;
 
-    }).finally(|| {
+            Ok(())
 
-        bash_shell::exec(&format!("docker unpause {}", ps_result.stdout))?.as_result()?;
+        }).finally(|| {
 
-        Ok(())
-    })?;
+            bash_shell::exec(&format!("docker unpause {}", ps_result.stdout))?.as_result()?;
 
-    do_try::run(|| {
+            Ok(())
+        })?;
 
         bash_shell::exec(&format!(
             "cd {} && tar -cpf {} --use-compress-program=\"pigz\" ./",
@@ -50,6 +50,7 @@ pub fn main_result () -> Result<(), GeneralError> {
         ))?.as_result()?;
 
         Ok(())
+        
     }).finally(|| {
 
         bash_shell::exec(&format!("rm {} -rf", volumes_copy_path))?.as_result()?;
