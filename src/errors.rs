@@ -1,5 +1,5 @@
 use std::any::Any;
-use crate::errors::GeneralError::{IoError, Dynamic, Detailed, ParseInt};
+use crate::errors::GeneralError::{IoError, Dynamic, Detailed, ParseInt, SmtpError, Failure, JsonError};
 use std::num::ParseIntError;
 
 #[derive(Debug, From)]
@@ -7,7 +7,10 @@ pub enum GeneralError {
     IoError(std::io::Error),
     Dynamic(Box<dyn Any + Send + 'static>),
     Detailed(DetailedError),
-    ParseInt(ParseIntError)
+    ParseInt(ParseIntError),
+    SmtpError(lettre::smtp::error::Error),
+    Failure(failure::Error),
+    JsonError(serde_json::Error),
 }
 
 pub fn handle_error(error: GeneralError) {
@@ -16,6 +19,9 @@ pub fn handle_error(error: GeneralError) {
         Dynamic(err) => print!("{:#?}", err),
         Detailed(err) => print!("{:#?}", err),
         ParseInt(err) => print!("{:#?}", err),
+        SmtpError(err) => print!("{:#?}", err),
+        Failure(err) => print!("{:#?}", err),
+        JsonError(err) => print!("{:#?}", err),
     }
 }
 

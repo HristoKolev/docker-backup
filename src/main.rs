@@ -1,62 +1,86 @@
 #[macro_use]
 extern crate derive_more;
 
-use crate::errors::{GeneralError, handle_error};
+extern crate lettre;
+extern crate lettre_email;
+extern crate failure;
+
+extern crate serde;
+extern crate serde_json;
+
+use crate::errors::{GeneralError, handle_error, DetailedError};
+use crate::app_config::AppConfig;
 
 mod bash_shell;
 mod errors;
 mod do_try;
+mod email;
+mod app_config;
 
 fn main() {
 
     let result = main_result();
 
-    if let Err(error) = result {
-        handle_error(error)
+    match result {
+        Ok(..) => {},
+        Err(error) => {
+            handle_error(error)
+        }
     }
 }
 
 pub fn main_result () -> Result<(), GeneralError> {
 
-    let volumes_path = "/var/lib/docker/volumes";
-    let volumes_copy_path = format!("{}-copy", volumes_path);
-    let volumes_archive_path = "/var/lib/docker/volumes.tar.gz";
+    let app_config = app_config::read_config()?;
 
-    let ps_result = bash_shell::exec("echo `docker ps -a -q`")?.as_result()?;
+    let res = run_backup(&app_config);
 
-    do_try::run(|| {
+    match res {
+        Ok(..) => {},
+        Err(err) => {
 
-        do_try::run(|| {
+            let subject = format!(
+                "An error occurred while running `docker-backup` on `{}`.",
+                app_config.hostname
+            );
 
-            bash_shell::exec(&format!("rsync -a {}/ {}/", volumes_path, volumes_copy_path))?.as_result()?;
+            let content = format!("{}", 1);
 
-            bash_shell::exec(&format!("docker pause {}", ps_result.stdout))?.as_result()?;
+            send_mail(
+                &app_config,
+                &*subject,
+                &*subject,
+            )?;
+        }
+    }
 
-            bash_shell::exec(&format!("rsync -a {}/ {}/", volumes_path, volumes_copy_path))?.as_result()?;
+    Ok(())
+}
 
-            Ok(())
+pub fn run_backup(app_config: &AppConfig) -> Result<(), GeneralError> {
 
-        }).finally(|| {
+    Ok(())
+}
 
-            bash_shell::exec(&format!("docker unpause {}", ps_result.stdout))?.as_result()?;
+fn send_mail(app_config: &AppConfig, subject: &str, content: &str) -> Result<(), GeneralError> {
 
-            Ok(())
-        })?;
+    let email_client = email::EmailClient::new(
+        &*app_config.email_config.smtp_username,
+        &*app_config.email_config.smtp_password,
+        &*app_config.email_config.smtp_host,
+        app_config.email_config.smtp_port,
+    );
 
-        bash_shell::exec(&format!(
-            "cd {} && tar -cpf {} --use-compress-program=\"pigz\" ./",
-            volumes_copy_path,
-            volumes_archive_path
-        ))?.as_result()?;
+    let message_subject = "subj123";
+    let message_content = "content123";
 
-        Ok(())
-        
-    }).finally(|| {
+    let message = email::EmailMessage::new(
+        app_config.email_config.notification_emails.clone(),
+        message_subject,
+        message_content,
+    );
 
-        bash_shell::exec(&format!("rm {} -rf", volumes_copy_path))?.as_result()?;
+    email_client.send(message)?;
 
-        Ok(())
-    })?;
-
-   Ok(())
+    Ok(())
 }
