@@ -12,11 +12,17 @@ pub struct EmailConfig {
 }
 
 #[derive(Serialize, Deserialize)]
+pub struct DockerConfig {
+    pub volumes_path: String,
+    pub volumes_mirror_path: String,
+    pub archive_path: String,
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct AppConfig {
-
     pub hostname: String,
-
     pub email_config: EmailConfig,
+    pub docker_config: DockerConfig,
 }
 
 pub fn read_config() -> Result<AppConfig, GeneralError> {

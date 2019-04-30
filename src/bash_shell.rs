@@ -65,15 +65,10 @@ pub fn exec(command: &str) -> Result<CommandResult, GeneralError> {
     let exit_status = process.wait()?;
 
     return Ok(CommandResult {
-
         status_code: exit_status.code(),
-
         success: exit_status.success(),
-
         stdout: out_result,
-
         stderr: err_result,
-
         command: command.to_string()
     });
 }
@@ -90,15 +85,10 @@ fn write_err(text: &str) {
 
 #[derive(Debug)]
 pub struct CommandResult {
-
     pub status_code: Option<i32>,
-
     pub stdout: String,
-
     pub stderr: String,
-
     pub command: String,
-
     pub success: bool,
 }
 

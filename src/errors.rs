@@ -1,5 +1,15 @@
 use std::any::Any;
-use crate::errors::GeneralError::{IoError, Dynamic, Detailed, ParseInt, SmtpError, Failure, JsonError};
+
+use crate::errors::GeneralError::{
+    IoError,
+    Dynamic,
+    Detailed,
+    ParseInt,
+    SmtpError,
+    Failure,
+    JsonError
+};
+
 use std::num::ParseIntError;
 
 #[derive(Debug, From)]
@@ -43,4 +53,3 @@ impl std::error::Error for DetailedError {
         &self.message
     }
 }
-

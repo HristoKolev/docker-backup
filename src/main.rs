@@ -8,7 +8,7 @@ extern crate failure;
 extern crate serde;
 extern crate serde_json;
 
-use crate::errors::{GeneralError, handle_error, DetailedError};
+use crate::errors::{GeneralError, handle_error};
 use crate::app_config::AppConfig;
 
 mod bash_shell;
@@ -16,6 +16,7 @@ mod errors;
 mod do_try;
 mod email;
 mod app_config;
+mod email_report;
 
 fn main() {
 
@@ -33,24 +34,13 @@ pub fn main_result () -> Result<(), GeneralError> {
 
     let app_config = app_config::read_config()?;
 
-    let res = run_backup(&app_config);
+    let result = run_backup(&app_config);
 
-    match res {
+    match result {
         Ok(..) => {},
         Err(err) => {
-
-            let subject = format!(
-                "An error occurred while running `docker-backup` on `{}`.",
-                app_config.hostname
-            );
-
-            let content = format!("{}", 1);
-
-            send_mail(
-                &app_config,
-                &*subject,
-                &*subject,
-            )?;
+            email_report::send_report(&app_config, &err)?;
+            println!("{:#?}", err);
         }
     }
 
@@ -59,28 +49,57 @@ pub fn main_result () -> Result<(), GeneralError> {
 
 pub fn run_backup(app_config: &AppConfig) -> Result<(), GeneralError> {
 
-    Ok(())
-}
+    let ps_result = bash_shell::exec("echo1 `docker ps -a -q`")?.as_result()?;
 
-fn send_mail(app_config: &AppConfig, subject: &str, content: &str) -> Result<(), GeneralError> {
+    do_try::run(|| {
 
-    let email_client = email::EmailClient::new(
-        &*app_config.email_config.smtp_username,
-        &*app_config.email_config.smtp_password,
-        &*app_config.email_config.smtp_host,
-        app_config.email_config.smtp_port,
-    );
+        do_try::run(|| {
 
-    let message_subject = "subj123";
-    let message_content = "content123";
+            bash_shell::exec(&format!(
+                "rsync -a {}/ {}/",
+                app_config.docker_config.volumes_path,
+                app_config.docker_config.volumes_mirror_path
+            ))?.as_result()?;
 
-    let message = email::EmailMessage::new(
-        app_config.email_config.notification_emails.clone(),
-        message_subject,
-        message_content,
-    );
+            bash_shell::exec(&format!(
+                "docker pause {}",
+                ps_result.stdout
+            ))?.as_result()?;
 
-    email_client.send(message)?;
+            bash_shell::exec(&format!(
+                "rsync -a {}/ {}/",
+                app_config.docker_config.volumes_path,
+                app_config.docker_config.volumes_mirror_path
+            ))?.as_result()?;
+
+            Ok(())
+
+        }).finally(|| {
+
+            bash_shell::exec(&format!(
+                "docker unpause {}", ps_result.stdout
+            ))?.as_result()?;
+
+            Ok(())
+        })?;
+
+        bash_shell::exec(&format!(
+            "cd {} && tar -cpf {} --use-compress-program=\"pigz\" ./",
+            app_config.docker_config.volumes_mirror_path,
+            app_config.docker_config.archive_path
+        ))?.as_result()?;
+
+        Ok(())
+
+    }).finally(|| {
+
+        bash_shell::exec(&format!(
+            "rm {} -rf",
+            app_config.docker_config.volumes_mirror_path
+        ))?.as_result()?;
+
+        Ok(())
+    })?;
 
     Ok(())
 }
