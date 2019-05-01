@@ -8,15 +8,15 @@ extern crate failure;
 extern crate serde;
 extern crate serde_json;
 
-use crate::errors::{GeneralError, handle_error};
-use crate::app_config::AppConfig;
-
 mod bash_shell;
 mod errors;
 mod do_try;
 mod email;
 mod app_config;
 mod email_report;
+
+use crate::errors::{GeneralError, handle_error};
+use crate::app_config::AppConfig;
 
 fn main() {
 

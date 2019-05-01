@@ -27,7 +27,7 @@ impl EmailClient {
         }
     }
 
-    pub fn send(self, message: EmailMessage) -> Result<(), GeneralError> {
+    pub fn send(self, message: &EmailMessage) -> Result<(), GeneralError> {
 
         let address = (&*self.smtp_host, self.smtp_port);
 
@@ -45,10 +45,10 @@ impl EmailClient {
         let mut email_builder = Email::builder()
             .from(&*self.username)
             .subject(&*message.subject)
-            .text(&*message.content);
+            .html(&*message.content);
 
-        for address in message.to_addresses {
-            email_builder = email_builder.bcc(address);
+        for address in &message.to_addresses {
+            email_builder = email_builder.bcc(&address[..]);
         }
 
         let email= email_builder.build()?.into();

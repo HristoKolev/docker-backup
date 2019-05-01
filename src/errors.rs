@@ -1,14 +1,6 @@
 use std::any::Any;
 
-use crate::errors::GeneralError::{
-    IoError,
-    Dynamic,
-    Detailed,
-    ParseInt,
-    SmtpError,
-    Failure,
-    JsonError
-};
+use crate::errors::GeneralError::{IoError, Dynamic, Detailed, ParseInt, SmtpError, Failure, JsonError, HandlebarsError};
 
 use std::num::ParseIntError;
 
@@ -21,6 +13,7 @@ pub enum GeneralError {
     SmtpError(lettre::smtp::error::Error),
     Failure(failure::Error),
     JsonError(serde_json::Error),
+    HandlebarsError(handlebars::TemplateRenderError),
 }
 
 pub fn handle_error(error: GeneralError) {
@@ -32,6 +25,7 @@ pub fn handle_error(error: GeneralError) {
         SmtpError(err) => print!("{:#?}", err),
         Failure(err) => print!("{:#?}", err),
         JsonError(err) => print!("{:#?}", err),
+        HandlebarsError(err) => print!("{:#?}", err),
     }
 }
 
