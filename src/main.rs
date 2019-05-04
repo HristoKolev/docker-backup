@@ -1,6 +1,3 @@
-#[macro_use]
-extern crate derive_more;
-
 extern crate lettre;
 extern crate lettre_email;
 extern crate failure;
@@ -15,22 +12,21 @@ mod email;
 mod app_config;
 mod email_report;
 
-use crate::errors::{GeneralError, handle_error};
+use crate::errors::*;
 use crate::app_config::AppConfig;
 
 fn main() {
 
-    let result = main_result();
+    std::env::set_var("RUST_BACKTRACE", "1");
 
-    match result {
-        Ok(..) => {},
-        Err(error) => {
-            handle_error(error)
-        }
+    if let Err(error) = main_result() {
+
+        handle_error(&error)
+            .expect("An error occurred while handling an error.");
     }
 }
 
-pub fn main_result () -> Result<(), GeneralError> {
+pub fn main_result () -> Result<()> {
 
     let app_config = app_config::read_config()?;
 
@@ -47,7 +43,7 @@ pub fn main_result () -> Result<(), GeneralError> {
     Ok(())
 }
 
-pub fn run_backup(app_config: &AppConfig) -> Result<(), GeneralError> {
+pub fn run_backup(app_config: &AppConfig) -> Result<()> {
 
     let ps_result = bash_shell::exec("echo1 `docker ps -a -q`")?.as_result()?;
 

@@ -1,4 +1,4 @@
-use crate::errors::GeneralError;
+use crate::errors::*;
 
 use lettre_email::Email;
 use lettre::{SmtpClient, ClientSecurity, Transport};
@@ -27,7 +27,7 @@ impl EmailClient {
         }
     }
 
-    pub fn send(self, message: &EmailMessage) -> Result<(), GeneralError> {
+    pub fn send(self, message: &EmailMessage) -> Result<()> {
 
         let address = (&*self.smtp_host, self.smtp_port);
 

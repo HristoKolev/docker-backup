@@ -3,9 +3,9 @@ use std::thread::JoinHandle;
 use std::thread;
 use std::io::{BufReader, Write, BufRead};
 
-use crate::errors::{GeneralError, DetailedError};
+use crate::errors::*;
 
-pub fn exec(command: &str) -> Result<CommandResult, GeneralError> {
+pub fn exec(command: &str) -> Result<CommandResult> {
 
     let mut process = Command::new("/usr/bin/env")
         .arg("bash")
@@ -15,15 +15,15 @@ pub fn exec(command: &str) -> Result<CommandResult, GeneralError> {
         .spawn()?;
 
     let stdout = process.stdout.take()
-        .ok_or_else(|| DetailedError::new("stdout was not redirected.".to_string()))?;
+        .ok_or_else(|| CustomError::from_message("stdout was not redirected."))?;
 
     let stderr = process.stderr.take()
-        .ok_or_else(|| DetailedError::new("stderr was not redirected.".to_string()))?;
+        .ok_or_else(|| CustomError::from_message("stderr was not redirected."))?;
 
     let stdin = process.stdin.as_mut()
-        .ok_or_else(|| DetailedError::new("stdin was not redirected.".to_string()))?;
+        .ok_or_else(|| CustomError::from_message("stdin was not redirected."))?;
 
-    let stdout_thread : JoinHandle<Result<String, GeneralError>> = thread::spawn(|| {
+    let stdout_thread : JoinHandle<Result<String>> = thread::spawn(|| {
 
         let buff = BufReader::new(stdout);
 
@@ -39,7 +39,7 @@ pub fn exec(command: &str) -> Result<CommandResult, GeneralError> {
         Ok(result)
     });
 
-    let stderr_thread : JoinHandle<Result<String, GeneralError>> = thread::spawn(|| {
+    let stderr_thread : JoinHandle<Result<String>> = thread::spawn(|| {
 
         let buff = BufReader::new(stderr);
 
@@ -59,8 +59,11 @@ pub fn exec(command: &str) -> Result<CommandResult, GeneralError> {
     stdin.write_all(format!("{}\n", command).as_bytes())?;
     stdin.write_all("exit $?;\n".as_bytes())?;
 
-    let out_result = stdout_thread.join()??;
-    let err_result = stderr_thread.join()??;
+    let out_result = stdout_thread.join().replace_error(||
+            CustomError::from_message("The stdout thread failed for some reason."))??;
+
+    let err_result = stderr_thread.join().replace_error(||
+        CustomError::from_message("The stderr thread failed for some reason."))??;
 
     let exit_status = process.wait()?;
 
@@ -95,11 +98,11 @@ pub struct CommandResult {
 impl CommandResult {
 
     //noinspection RsSelfConvention
-    pub fn as_result(self) -> Result<CommandResult, DetailedError> {
+    pub fn as_result(self) -> Result<CommandResult> {
         if self.success {
             Ok(self)
         } else {
-            Err(DetailedError::new(format!(
+            Err(CustomError::from_message(&format!(
                 "A command exited with a non 0 exit code or with a signal. '{}'",
                 self.command
             )))

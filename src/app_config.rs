@@ -1,5 +1,5 @@
 use serde::{Serialize, Deserialize};
-use crate::errors::GeneralError;
+use crate::errors::*;
 
 #[derive(Serialize, Deserialize)]
 pub struct EmailConfig {
@@ -25,7 +25,7 @@ pub struct AppConfig {
     pub docker_config: DockerConfig,
 }
 
-pub fn read_config() -> Result<AppConfig, GeneralError> {
+pub fn read_config() -> Result<AppConfig> {
 
     let app_config_path = "/work/projects/docker-backup/app-config.json";
 

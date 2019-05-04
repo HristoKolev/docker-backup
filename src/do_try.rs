@@ -1,13 +1,13 @@
-use crate::errors::GeneralError;
+use crate::errors::*;
 
 pub struct FinStruct<TRes> {
-    result: Result<TRes, GeneralError>
+    result: Result<TRes>
 }
 
 impl<TRes> FinStruct<TRes> {
 
-    pub fn finally<FFinally>(self, ff: FFinally) -> Result<TRes, GeneralError>
-        where FFinally : FnOnce() -> Result<(), GeneralError> {
+    pub fn finally<FFinally>(self, ff: FFinally) -> Result<TRes>
+        where FFinally : FnOnce() -> Result<()> {
 
         let finally_result = ff();
 
@@ -25,7 +25,7 @@ impl<TRes> FinStruct<TRes> {
 }
 
 pub fn run<FDo, TRes>(fdo: FDo) -> FinStruct<TRes>
-    where FDo: FnOnce() -> Result<TRes, GeneralError> {
+    where FDo: FnOnce() -> Result<TRes> {
 
     let result = fdo();
 

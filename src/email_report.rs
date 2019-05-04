@@ -1,10 +1,10 @@
 use crate::app_config::AppConfig;
-use crate::errors::GeneralError;
+use crate::errors::*;
 use crate::email;
 use serde_json::json;
 use handlebars::Handlebars;
 
-pub fn render_report(app_config: &AppConfig, error: &GeneralError) -> Result<String, GeneralError> {
+pub fn render_report(app_config: &AppConfig, error: &CustomError) -> Result<String> {
 
     let html_template = r##"
         <!DOCTYPE html>
@@ -413,7 +413,7 @@ pub fn render_report(app_config: &AppConfig, error: &GeneralError) -> Result<Str
     Ok(rendered)
 }
 
-pub fn send_report(app_config: &AppConfig, error: &GeneralError) -> Result<(), GeneralError> {
+pub fn send_report(app_config: &AppConfig, error: &CustomError) -> Result<()> {
 
     let subject = format!(
         "[FAILURE] An error occurred while running `docker-backup` on `{}`.",
@@ -431,7 +431,7 @@ pub fn send_report(app_config: &AppConfig, error: &GeneralError) -> Result<(), G
     Ok(())
 }
 
-fn send_mail(app_config: &AppConfig, subject: &str, content: &str) -> Result<(), GeneralError> {
+fn send_mail(app_config: &AppConfig, subject: &str, content: &str) -> Result<()> {
 
     let email_client = email::EmailClient::new(
         &*app_config.email_config.smtp_username,
