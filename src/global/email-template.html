@@ -1,21 +1,12 @@
-use crate::app_config::AppConfig;
-use crate::errors::*;
-use crate::email;
-use serde_json::json;
-use handlebars::Handlebars;
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 
-pub fn render_report(app_config: &AppConfig, error: &CustomError) -> Result<String> {
+    <meta property="og:title" content="*|MC:SUBJECT|*" />
 
-    let html_template = r##"
-        <!DOCTYPE html>
-        <html>
-            <head>
-                <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-
-                <meta property="og:title" content="*|MC:SUBJECT|*" />
-
-                <title>*|MC:SUBJECT|*</title>
-                <style type="text/css">
+    <title>*|MC:SUBJECT|*</title>
+    <style type="text/css">
                     /* Client-specific Styles */
                     #outlook a{padding:0;} /* Force Outlook to provide a "view in browser" button. */
                     body{width:100% !important;} .ReadMsgBody{width:100%;} .ExternalClass{width:100%;} /* Force Hotmail to display emails at full width */
@@ -373,80 +364,28 @@ pub fn render_report(app_config: &AppConfig, error: &CustomError) -> Result<Stri
                     }
 
                 </style>
-            </head>
-            <body leftmargin="0" marginwidth="0" topmargin="0" marginheight="0" offset="0">
-                <center>
-                    <table border="0" cellpadding="0" cellspacing="0" height="100%" width="100%" id="backgroundTable">
-                        <tr>
-                            <td align="center" valign="top">
-                                <table border="0" cellpadding="0" cellspacing="0" width="900" id="templateContainer" style="background: #e1f3ff; border-radius: .3rem; padding: 1rem;">
-                                    <tr>
-                                        <td align="center" valign="top">
-                                             An error occurred while running `docker-backup` on <span style='color: red;'>{{app_config.hostname}}</span>.
-                                        </td>
-                                    </tr>
+</head>
+<body leftmargin="0" marginwidth="0" topmargin="0" marginheight="0" offset="0">
+<center>
+    <table border="0" cellpadding="0" cellspacing="0" height="100%" width="100%" id="backgroundTable">
+        <tr>
+            <td align="center" valign="top">
+                <table border="0" cellpadding="0" cellspacing="0" width="900" id="templateContainer" style="background: #e1f3ff; border-radius: .3rem; padding: 1rem;">
+                    <tr>
+                        <td align="center" valign="top">
+                            An error occurred while running `docker-backup` on <span style='color: red;'>{{app_config.hostname}}</span>.
+                        </td>
+                    </tr>
 
-                                    <tr>
-                                        <td align="" valign="top">
-                                            <b>Error</b>:<pre style='border: 1px solid gray; padding: 5px;'>{{formatted_error}}</pre>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </td>
-                        </tr>
-                    </table>
-                </center>
-            </body>
-        </html>
-    "##;
-
-    let registry = Handlebars::new();
-
-    let rendered = registry.render_template(
-        html_template,
-        &json!({
-            "app_config": app_config,
-            "formatted_error": format!("{:#?}", error)
-         })
-    )?;
-
-    Ok(rendered)
-}
-
-pub fn send_report(app_config: &AppConfig, error: &CustomError) -> Result<()> {
-
-    let subject = format!(
-        "[FAILURE] An error occurred while running `docker-backup` on `{}`.",
-        app_config.hostname
-    );
-
-    let report_content = render_report(&app_config, &error)?;
-
-    send_mail(
-        &app_config,
-        &*subject,
-        &*report_content,
-    )?;
-
-    Ok(())
-}
-
-fn send_mail(app_config: &AppConfig, subject: &str, content: &str) -> Result<()> {
-
-    let email_client = email::EmailClient::new(
-        &*app_config.email_config.smtp_username,
-        &*app_config.email_config.smtp_password,
-        &*app_config.email_config.smtp_host,
-        app_config.email_config.smtp_port,
-    );
-
-    let message = email::EmailMessage::new(
-        app_config.email_config.notification_emails.clone(),
-        subject,
-        content,
-    );
-
-    email_client.send(&message)?;
-
-    Ok(())
-}
+                    <tr>
+                        <td align="" valign="top">
+                            <b>Error</b>:<pre style='border: 1px solid gray; padding: 5px;'>{{formatted_error}}</pre>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</center>
+</body>
+</html>

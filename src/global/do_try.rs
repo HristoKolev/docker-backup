@@ -1,4 +1,4 @@
-use crate::errors::*;
+use super::prelude::*;
 
 pub struct FinStruct<TRes> {
     result: Result<TRes>

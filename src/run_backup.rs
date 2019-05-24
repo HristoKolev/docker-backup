@@ -1,8 +1,9 @@
-use crate::app_config::AppConfig;
-use crate::{bash_shell, do_try};
-use crate::errors::*;
+use crate::global::{bash_shell, do_try, app_config};
+use crate::global::prelude::*;
 
-pub fn run_backup(app_config: &AppConfig) -> Result<()> {
+pub fn run_backup() -> Result<()> {
+
+    let app_config = app_config();
 
     let ps_result = bash_shell::exec("echo1 `docker ps -a -q`")?.as_result()?;
 

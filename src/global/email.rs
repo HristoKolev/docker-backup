@@ -1,4 +1,4 @@
-use crate::errors::*;
+use super::prelude::*;
 
 use lettre_email::Email;
 use lettre::{SmtpClient, ClientSecurity, Transport};

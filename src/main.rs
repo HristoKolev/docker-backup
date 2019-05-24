@@ -1,45 +1,29 @@
-extern crate lettre;
-extern crate lettre_email;
-extern crate failure;
+#![forbid(unsafe_code)]
 
-extern crate serde;
-extern crate serde_json;
+#[macro_use]
+extern crate lazy_static;
 
-mod bash_shell;
-mod errors;
-mod do_try;
-mod email;
-mod app_config;
-mod email_report;
+#[macro_use]
+mod global;
+
 mod run_backup;
 
-use crate::errors::*;
+use crate::global::prelude::*;
 use crate::run_backup::run_backup;
 
 fn main() {
 
-    std::env::set_var("RUST_BACKTRACE", "1");
+    global::initialize();
 
-    if let Err(error) = main_result() {
-
-        handle_error(&error)
-            .expect("An error occurred while handling an error.");
-    }
+    main_result().crash_on_error();
 }
 
-pub fn main_result () -> Result<()> {
+fn main_result() -> Result<()> {
 
-    let app_config = app_config::read_config()?;
+    // run_backup()?;
 
-    let result = run_backup(&app_config);
 
-    match result {
-        Ok(..) => {},
-        Err(err) => {
-            email_report::send_report(&app_config, &err)?;
-            println!("{:#?}", err);
-        }
-    }
+    return Err(CustomError::from_message("cats"));
 
     Ok(())
 }

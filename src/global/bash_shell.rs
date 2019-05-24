@@ -3,7 +3,7 @@ use std::thread::JoinHandle;
 use std::thread;
 use std::io::{BufReader, Write, BufRead};
 
-use crate::errors::*;
+use super::prelude::*;
 
 pub fn exec(command: &str) -> Result<CommandResult> {
 
