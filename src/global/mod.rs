@@ -6,6 +6,7 @@ pub mod custom_sentry_client;
 pub mod error_handler;
 pub mod logging;
 pub mod prelude;
+#[macro_use]
 pub mod bash_shell;
 pub mod do_try;
 pub mod email;
@@ -125,10 +126,10 @@ pub fn logger() -> &'static Logger {
 #[allow(unused_macros)]
 macro_rules! log {
     ($x:expr) => {
-        global::logger().log(&format!("{}", $x))?
+        crate::global::logger().log(&format!("{}", $x))?
     };
     ($($x:expr),*) => {
-        global::logger().log(&format!($($x,)*))?
+        crate::global::logger().log(&format!($($x,)*))?
     };
 }
 

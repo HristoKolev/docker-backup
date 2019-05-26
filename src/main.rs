@@ -20,10 +20,9 @@ fn main() {
 
 fn main_result() -> Result<()> {
 
-    // run_backup()?;
+    run_backup()?;
 
-
-    return Err(CustomError::from_message("cats"));
+    // return Err(CustomError::from_message("cats"));
 
     Ok(())
 }

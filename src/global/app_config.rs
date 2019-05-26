@@ -13,10 +13,15 @@ pub struct EmailConfig {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct ArchiveConfig {
+    pub cache_path: String,
+    pub temp_path: String,
+    pub archive_password: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct DockerConfig {
     pub volumes_path: String,
-    pub volumes_mirror_path: String,
-    pub archive_path: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -24,6 +29,7 @@ pub struct AppConfig {
     pub hostname: String,
     pub sentry_dsn: String,
     pub email_config: EmailConfig,
+    pub archive_config: ArchiveConfig,
     pub docker_config: DockerConfig,
 }
 

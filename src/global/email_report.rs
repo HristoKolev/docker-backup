@@ -4,6 +4,7 @@ use handlebars::Handlebars;
 use super::email;
 use super::app_config;
 use super::prelude::*;
+use crate::global::logger;
 
 fn render_report(error: &CustomError) -> Result<String> {
 
@@ -11,13 +12,16 @@ fn render_report(error: &CustomError) -> Result<String> {
 
     let app_config = app_config();
 
+    let logs = logger().get_logs()?.join("\n");
+
     let registry = Handlebars::new();
 
     let rendered = registry.render_template(
         html_template,
         &json!({
             "app_config": app_config,
-            "formatted_error": format!("{:#?}", error)
+            "formatted_error": format!("{:#?}", error),
+            "logs": logs,
          })
     )?;
 

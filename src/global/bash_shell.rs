@@ -4,6 +4,7 @@ use std::thread;
 use std::io::{BufReader, Write, BufRead};
 
 use super::prelude::*;
+use crate::global::logger;
 
 pub fn exec(command: &str) -> Result<CommandResult> {
 
@@ -33,7 +34,7 @@ pub fn exec(command: &str) -> Result<CommandResult> {
 
             let line = line_result?;
             result.push_str(&format!("{}\n", line));
-            write_out(&format!("OUT | {}\n", line));
+            logger().log(&format!("OUT | {}", line))?;
         }
 
         Ok(result)
@@ -49,7 +50,7 @@ pub fn exec(command: &str) -> Result<CommandResult> {
 
             let line = line_result?;
             result.push_str(&format!("{}\n", line));
-            write_err(&format!("ERR | {}\n", line));
+            logger().log(&format!("ERR | {}", line))?;
         }
 
         Ok(result)
@@ -76,16 +77,6 @@ pub fn exec(command: &str) -> Result<CommandResult> {
     });
 }
 
-fn write_out(text: &str){
-
-    print!("{}", text);
-}
-
-fn write_err(text: &str) {
-
-    eprint!("{}", text);
-}
-
 #[derive(Debug)]
 pub struct CommandResult {
     pub status_code: Option<i32>,
@@ -108,4 +99,15 @@ impl CommandResult {
             )))
         }
     }
+}
+
+
+#[allow(unused_macros)]
+macro_rules! bash_exec {
+    ($x:expr) => {
+        crate::global::bash_shell::exec(&format!("{}", $x))?.as_result()?
+    };
+    ($($x:expr),*) => {
+        crate::global::bash_shell::exec(&format!($($x,)*))?.as_result()?
+    };
 }
