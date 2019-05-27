@@ -31,8 +31,10 @@ pub trait PathExtensions {
     fn extension_as_string(&self) -> Result<String>;
     fn file_stem_as_string(&self) -> Result<String>;
     fn get_directory_as_string(&self) -> Result<String>;
+
     fn get_directory(&self) -> PathBuf;
     fn combine_with(&self, p: &str) -> PathBuf;
+    fn create_directory(&self) -> Result<PathBuf>;
 }
 
 impl PathExtensions for Path {
@@ -67,7 +69,7 @@ impl PathExtensions for Path {
 
     fn get_directory_as_string(&self) -> Result<String> {
 
-        let mut copy = self.clone().to_owned();
+        let mut copy = self.to_path_buf();
 
         copy.pop();
 
@@ -76,7 +78,7 @@ impl PathExtensions for Path {
 
     fn get_directory(&self) -> PathBuf {
 
-        let mut copy = self.clone().to_owned();
+        let mut copy = self.to_path_buf();
 
         copy.pop();
 
@@ -85,10 +87,19 @@ impl PathExtensions for Path {
 
     fn combine_with(&self, p: &str) -> PathBuf {
 
-        let mut copy = self.clone().to_owned();
+        let mut copy = self.to_path_buf();
 
         copy.push(p);
 
         copy
+    }
+
+    fn create_directory(&self) -> Result<PathBuf> {
+
+        let copy = self.to_path_buf();
+
+        ::std::fs::create_dir_all(copy.get_as_string()?)?;
+
+        Ok(copy)
     }
 }

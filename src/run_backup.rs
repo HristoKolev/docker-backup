@@ -1,31 +1,32 @@
-use crate::global::{bash_shell, do_try, app_config};
-use crate::global::prelude::*;
-use uuid::Uuid;
 use std::path::Path;
 
-pub fn run_backup() -> Result<()> {
+use uuid::Uuid;
+use chrono::Utc;
+
+use crate::global::{bash_shell, do_try, app_config};
+use crate::global::prelude::*;
+
+pub fn create_archive<F>(prefix: &str, func: F) -> Result
+    where F: FnOnce(&str) -> Result {
 
     let app_config = app_config();
 
-    let uuid = Uuid::new_v4().to_string();
-
     let work_path = Path::new(&app_config.archive_config.temp_path)
-        .combine_with(&uuid)
-        .get_as_string()?;
+        .combine_with(&Uuid::new_v4().to_string());
 
     do_try::run(|| {
 
-        bash_exec!("mkdir -p {0} && chmod 777 {0}", &work_path);
+        bash_exec!("mkdir -p {0} && chmod 777 {0}", &work_path.get_as_string()?);
 
-        let uncompressed = Path::new(&work_path)
+        let uncompressed = work_path
             .combine_with("uncompressed-archive")
             .get_as_string()?;
 
-        bash_exec!("mkdir -p {0} && chmod 777 {0}", &uncompressed);
+        bash_exec!("mkdir -p {0} && chmod 777 {0}", uncompressed);
 
-        // Do things.
+        func(&*uncompressed)?;
 
-        let compressed = Path::new(&work_path)
+        let compressed = work_path
             .combine_with("compressed-archive.tar.gz")
             .get_as_string()?;
 
@@ -37,7 +38,7 @@ pub fn run_backup() -> Result<()> {
 
         bash_exec!("rm {0} -rf", uncompressed);
 
-        let final_archive = Path::new(&work_path)
+        let final_archive = work_path
             .combine_with("final.enc")
             .get_as_string()?;
 
@@ -50,10 +51,29 @@ pub fn run_backup() -> Result<()> {
 
         bash_exec!("rm {0} -f", compressed);
 
+        let now = Utc::now();
+
+        let daily_folder = Path::new(&app_config.archive_config.cache_path)
+            .combine_with(&now.format("day_%Y_%m_%d_").to_string())
+            .create_directory()?;
+
+        let archive_file_name = format!(
+            "{}.{}.{}.backup",
+            prefix,
+            now.format("%Y-%m-%d_").to_string(),
+            now.timestamp().to_string()
+        );
+
+        let archive_file_path = daily_folder
+            .combine_with(&archive_file_name)
+            .get_as_string()?;
+
+        bash_exec!("mv {} {}", &final_archive, &archive_file_path);
+
         Ok(())
     }).finally(|| {
 
-        bash_exec!( "rm {} -rf", work_path);
+        bash_exec!( "rm {} -rf", work_path.get_as_string()?);
 
         Ok(())
     })?;

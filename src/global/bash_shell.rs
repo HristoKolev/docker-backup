@@ -101,7 +101,6 @@ impl CommandResult {
     }
 }
 
-
 #[allow(unused_macros)]
 macro_rules! bash_exec {
     ($x:expr) => {

@@ -180,7 +180,7 @@ impl From<handlebars::TemplateRenderError> for CustomError {
     }
 }
 
-pub type Result<T> = std::result::Result<T, CustomError>;
+pub type Result<T = ()> = std::result::Result<T, CustomError>;
 
 pub trait ResultExtensionsReplaceError<R> {
     fn replace_error<ErrFunc>(self, err_func: ErrFunc) -> Result<R>
