@@ -1,9 +1,8 @@
 use std::path::Path;
 
 use uuid::Uuid;
-use chrono::Utc;
 
-use crate::global::{bash_shell, do_try, app_config};
+use crate::global::{do_try, app_config};
 use crate::global::prelude::*;
 
 pub fn create_archive<F>(prefix: &str, func: F) -> Result
@@ -51,16 +50,16 @@ pub fn create_archive<F>(prefix: &str, func: F) -> Result
 
         bash_exec!("rm {0} -f", compressed);
 
-        let now = Utc::now();
+        let now = app_start_time();
 
         let daily_folder = Path::new(&app_config.archive_config.cache_path)
-            .combine_with(&now.format("day_%Y_%m_%d_").to_string())
+            .combine_with(&now.format("day_%Y_%m_%d").to_string())
             .create_directory()?;
 
         let archive_file_name = format!(
             "{}.{}.{}.backup",
             prefix,
-            now.format("%Y-%m-%d_").to_string(),
+            now.format("%Y-%m-%d").to_string(),
             now.timestamp().to_string()
         );
 

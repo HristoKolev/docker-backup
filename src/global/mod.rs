@@ -18,6 +18,8 @@ use self::custom_sentry_client::CustomSentryClient;
 use self::error_handler::handle_error;
 use self::logging::*;
 
+use chrono::{DateTime, Utc};
+
 static APP_CONFIG_FILE_NAME: &str = "app-config.json";
 static LOG_FILE_NAME: &str = "log/log.txt";
 static LOG_FILE_MAX_LENGTH: u64 = 1024000; // 10MB
@@ -28,6 +30,7 @@ pub struct Global {
     pub sentry: CustomSentryClient,
     pub logger: Logger,
     pub config_directory: String,
+    pub app_start_time: DateTime<Utc>,
 }
 
 /// Error wrapper of the global object builder.
@@ -65,6 +68,7 @@ fn create_global_result() -> Result<Global> {
         sentry,
         logger,
         config_directory: config_directory.get_as_string()?,
+        app_start_time: Utc::now()
     })
 }
 
@@ -121,6 +125,12 @@ pub fn sentry_client() -> &'static CustomSentryClient {
 pub fn logger() -> &'static Logger {
 
     &INSTANCE.logger
+}
+
+#[allow(unused)]
+pub fn app_start_time() -> &'static DateTime<Utc> {
+
+    &INSTANCE.app_start_time
 }
 
 #[allow(unused_macros)]

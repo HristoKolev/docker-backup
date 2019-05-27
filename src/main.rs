@@ -7,11 +7,9 @@ extern crate lazy_static;
 mod global;
 mod run_backup;
 
-use chrono::Utc;
-
 use crate::global::prelude::*;
 use crate::run_backup::create_archive;
-use crate::global::{do_try, bash_shell, app_config};
+use crate::global::{do_try, app_config};
 
 fn main() {
 
@@ -22,38 +20,40 @@ fn main() {
 
 fn main_result() -> Result<()> {
 
-//    let app_config = app_config();
-//
-//    create_archive("docker-volumes", |work_path| {
-//
-//        let ps_result = bash_exec!("echo `docker ps -a -q`");
-//
-//        do_try::run(|| {
-//
-//            bash_exec!(
-//                "rsync -a {}/ {}/",
-//                app_config.docker_config.volumes_path,
-//                work_path
-//            );
-//
-//            bash_exec!("docker pause {}", ps_result.stdout);
-//
-//            bash_exec!(
-//                "rsync -a {}/ {}/",
-//                app_config.docker_config.volumes_path,
-//                work_path
-//            );
-//
-//            Ok(())
-//        }).finally(|| {
-//
-//            bash_exec!("docker unpause {}", ps_result.stdout);
-//
-//            Ok(())
-//        })?;
-//
-//        Ok(())
-//    })?;
+    println!("1");
+
+    let app_config = app_config();
+
+    create_archive("docker-volumes", |work_path| {
+
+        let ps_result = bash_exec!("echo `docker ps -a -q`");
+
+        do_try::run(|| {
+
+            bash_exec!(
+                "rsync -a {}/ {}/",
+                app_config.docker_config.volumes_path,
+                work_path
+            );
+
+            bash_exec!("docker pause {}", ps_result.stdout);
+
+            bash_exec!(
+                "rsync -a {}/ {}/",
+                app_config.docker_config.volumes_path,
+                work_path
+            );
+
+            Ok(())
+        }).finally(|| {
+
+            bash_exec!("docker unpause {}", ps_result.stdout);
+
+            Ok(())
+        })?;
+
+        Ok(())
+    })?;
 
     Ok(())
 }
