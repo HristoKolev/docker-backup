@@ -1,9 +1,12 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use uuid::Uuid;
 
 use crate::global::{do_try, app_config};
 use crate::global::prelude::*;
+use sentry::internals::DateTime;
+use chrono::Utc;
+use chrono::offset::TimeZone;
 
 pub fn create_archive<F>(prefix: &str, func: F) -> Result
     where F: FnOnce(&str) -> Result {
@@ -78,4 +81,57 @@ pub fn create_archive<F>(prefix: &str, func: F) -> Result
     })?;
 
     Ok(())
+}
+
+pub fn list_archives(prefix: &str) -> Result<Vec<ArchiveMetadata>> {
+
+    let app_config = app_config();
+
+    let mut archives = Vec::new();
+
+    let daily_folders = ::std::fs::read_dir(&app_config.archive_config.cache_path)?;
+
+    for daily_folder_result in daily_folders {
+
+        let daily_folder = daily_folder_result?.path();
+
+        for archive_file_result in ::std::fs::read_dir(daily_folder)? {
+
+            let archive_path = archive_file_result?.path();
+            let archive_file_path_string = archive_path.file_name_as_string()?;
+            let parts: Vec<&str> = archive_file_path_string.split(".").collect::<Vec<&str>>();
+
+            if parts.len() == 4 {
+
+                let prefix = parts[0];
+                let timestamp = parts[2];
+                let extension = parts[3];
+
+                if extension == "backup" {
+                    match timestamp.parse::<i64>() {
+                        Ok(epoch) => {
+                            let archive_date = Utc.timestamp(epoch, 0);
+
+                            archives.push(ArchiveMetadata {
+                                full_path: archive_path.to_path_buf(),
+                                archive_date,
+                                prefix: prefix.to_string(),
+                            })
+
+                        },
+                        Err(err) => ()
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(archives)
+}
+
+#[derive(Debug)]
+pub struct ArchiveMetadata {
+    pub prefix: String,
+    pub full_path: PathBuf,
+    pub archive_date: DateTime<Utc>,
 }

@@ -27,7 +27,7 @@ impl EmailClient {
         }
     }
 
-    pub fn send(self, message: &EmailMessage) -> Result<()> {
+    pub fn send(self, message: &EmailMessage) -> Result {
 
         let address = (&*self.smtp_host, self.smtp_port);
 

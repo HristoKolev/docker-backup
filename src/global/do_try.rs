@@ -7,7 +7,7 @@ pub struct FinStruct<TRes> {
 impl<TRes> FinStruct<TRes> {
 
     pub fn finally<FFinally>(self, ff: FFinally) -> Result<TRes>
-        where FFinally : FnOnce() -> Result<()> {
+        where FFinally : FnOnce() -> Result {
 
         let finally_result = ff();
 

@@ -50,7 +50,7 @@ impl FileAppender {
         Ok(file_handle)
     }
 
-    fn roll_file(&self, state: &mut FileAppenderState) -> Result<()> {
+    fn roll_file(&self, state: &mut FileAppenderState) -> Result {
 
         let file_stem = self.config.file_path.file_stem_as_string()?;
         let file_extension = self.config.file_path.extension_as_string()?;
@@ -75,7 +75,7 @@ impl FileAppender {
         Ok(())
     }
 
-    pub fn writeln(&self, message: &str) -> Result<()> {
+    pub fn writeln(&self, message: &str) -> Result {
 
         let mut state = self.state.lock()?;
 
@@ -99,7 +99,7 @@ impl ConsoleAppender {
         ConsoleAppender {}
     }
 
-    pub fn writeln(&self, message: &str) -> Result<()> {
+    pub fn writeln(&self, message: &str) -> Result {
 
         let stdout = &mut ::std::io::stdout();
         write!(stdout, "{}\n", message)?;
@@ -121,7 +121,7 @@ impl InMemoryAppender {
         }
     }
 
-    pub fn add_entry(&self, message: &str) -> Result<()> {
+    pub fn add_entry(&self, message: &str) -> Result {
 
         let mut vec = self.entries.lock()?;
         vec.push(message.to_string());
@@ -154,7 +154,7 @@ impl Logger {
         Ok(format!("{} | {}", formatted_date, message))
     }
 
-    pub fn log(&self, message: &str) -> Result<()> {
+    pub fn log(&self, message: &str) -> Result {
 
         let formatted_message = self.format_message(message)?;
 

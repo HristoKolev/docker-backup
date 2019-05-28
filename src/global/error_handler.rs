@@ -4,7 +4,7 @@ use super::logger;
 use super::email_report;
 
 /// The default error handler.
-pub fn handle_error(error: &CustomError) -> Result<()> {
+pub fn handle_error(error: &CustomError) -> Result {
 
     let log_result = logger().log(&format!("An error occurred: {:#?}", error));
     let sentry_result = sentry_client().send_error(error);
@@ -15,7 +15,7 @@ pub fn handle_error(error: &CustomError) -> Result<()> {
     Ok(())
 }
 
-pub fn handle_fatal_error(error: &CustomError) -> Result<()> {
+pub fn handle_fatal_error(error: &CustomError) -> Result {
 
     let standard_error_handler_result = handle_error(error);
     let email_result = email_report::send_report(&error);

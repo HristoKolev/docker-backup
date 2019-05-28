@@ -28,7 +28,7 @@ fn render_report(error: &CustomError) -> Result<String> {
     Ok(rendered)
 }
 
-pub fn send_report(error: &CustomError) -> Result<()> {
+pub fn send_report(error: &CustomError) -> Result {
 
     let app_config = app_config();
 
@@ -44,7 +44,7 @@ pub fn send_report(error: &CustomError) -> Result<()> {
     Ok(())
 }
 
-fn send_mail(subject: &str, content: &str) -> Result<()> {
+fn send_mail(subject: &str, content: &str) -> Result {
 
     let app_config = app_config();
 

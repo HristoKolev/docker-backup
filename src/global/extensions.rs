@@ -1,6 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use super::prelude::*;
+use std::ffi::OsStr;
 
 pub trait StrExtensions {
     fn last_index_of(&self, c: char) -> Option<usize>;
@@ -26,12 +27,25 @@ impl StrExtensions for &str {
     }
 }
 
+pub trait OsStrExtensions {
+    fn get_as_string(&self) -> Result<String>;
+}
+
+impl OsStrExtensions for OsStr {
+    fn get_as_string(&self) -> Result<String> {
+
+        Ok(self.to_str()
+            .ok_or_else(|| CustomError::from_message("The OsStr cannot be converted to &str because it is not valid."))
+            ?.to_string())
+    }
+}
+
 pub trait PathExtensions {
     fn get_as_string(&self) -> Result<String>;
     fn extension_as_string(&self) -> Result<String>;
     fn file_stem_as_string(&self) -> Result<String>;
+    fn file_name_as_string(&self) -> Result<String>;
     fn get_directory_as_string(&self) -> Result<String>;
-
     fn get_directory(&self) -> PathBuf;
     fn combine_with(&self, p: &str) -> PathBuf;
     fn create_directory(&self) -> Result<PathBuf>;
@@ -50,10 +64,7 @@ impl PathExtensions for Path {
         Ok(self.extension()
             .ok_or_else(|| CustomError::from_message(
                 "The file does not have an extension"
-            ))?.to_str()
-            .ok_or_else(|| CustomError::from_message(
-                "The `Path.extension()` OsStr cannot be converted to &str because it is not valid."
-            ))?.to_string())
+            ))?.get_as_string()?)
     }
 
     fn file_stem_as_string(&self) -> Result<String> {
@@ -61,10 +72,15 @@ impl PathExtensions for Path {
         Ok(self.file_stem()
             .ok_or_else(|| CustomError::from_message(
                 "The file does not have a `file_stem`."
-            ))?.to_str()
+            ))?.get_as_string()?)
+    }
+
+    fn file_name_as_string(&self) -> Result<String> {
+
+        Ok(self.file_name()
             .ok_or_else(|| CustomError::from_message(
-                "The `Path.file_stem()` OsStr cannot be converted to &str because it is not valid."
-            ))?.to_string())
+                "The file does not have a `file_stem`."
+            ))?.get_as_string()?)
     }
 
     fn get_directory_as_string(&self) -> Result<String> {

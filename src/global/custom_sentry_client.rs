@@ -37,7 +37,7 @@ impl CustomSentryClient {
     }
 
     #[allow(unused)]
-    pub fn send_message(&self, message: &str) -> Result<()> {
+    pub fn send_message(&self, message: &str) -> Result {
 
         let mut event = self.create_event();
         event.message = Some(message.to_string());
@@ -48,7 +48,7 @@ impl CustomSentryClient {
     }
 
     #[allow(unused)]
-    pub fn send_error(&self, error: &CustomError) -> Result<()> {
+    pub fn send_error(&self, error: &CustomError) -> Result {
 
         let stacktrace = self.get_stacktrace(error)?;
 
@@ -131,7 +131,7 @@ impl CustomSentryClient {
         Ok(stacktrace)
     }
 
-    fn send_event(&self, event: &Event) -> Result<()> {
+    fn send_event(&self, event: &Event) -> Result {
 
         let client = reqwest::Client::new();
 
