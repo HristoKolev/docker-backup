@@ -27,3 +27,5 @@ failure = "0.1.5"
 handlebars = "1.1.0"
 
 uuid = "0.7"
+
+clap = "2.33.0"

@@ -98,30 +98,10 @@ pub fn list_archives(prefix: &str) -> Result<Vec<ArchiveMetadata>> {
         for archive_file_result in ::std::fs::read_dir(daily_folder)? {
 
             let archive_path = archive_file_result?.path();
-            let archive_file_path_string = archive_path.file_name_as_string()?;
-            let parts: Vec<&str> = archive_file_path_string.split(".").collect::<Vec<&str>>();
 
-            if parts.len() == 4 {
-
-                let prefix = parts[0];
-                let timestamp = parts[2];
-                let extension = parts[3];
-
-                if extension == "backup" {
-                    match timestamp.parse::<i64>() {
-                        Ok(epoch) => {
-                            let archive_date = Utc.timestamp(epoch, 0);
-
-                            archives.push(ArchiveMetadata {
-                                full_path: archive_path.to_path_buf(),
-                                archive_date,
-                                prefix: prefix.to_string(),
-                            })
-
-                        },
-                        Err(err) => ()
-                    }
-                }
+            match read_metadata(&archive_path)? {
+                Some(x) => archives.push(x),
+                None => ()
             }
         }
     }
@@ -129,9 +109,41 @@ pub fn list_archives(prefix: &str) -> Result<Vec<ArchiveMetadata>> {
     Ok(archives)
 }
 
+pub fn read_metadata(path: &Path) -> Result<Option<ArchiveMetadata>> {
+
+    let archive_file_path_string = path.file_name_as_string()?;
+    let parts: Vec<&str> = archive_file_path_string.split(".").collect::<Vec<&str>>();
+
+    if parts.len() != 4 {
+        return Ok(None);
+    }
+
+    let prefix = parts[0];
+    let timestamp = parts[2];
+    let extension = parts[3];
+
+    if extension != "backup" {
+        return Ok(None);
+    }
+
+    Ok(match timestamp.parse::<i64>() {
+        Ok(epoch) => {
+
+            let archive_date = Utc.timestamp(epoch, 0);
+
+            Some(ArchiveMetadata {
+                full_path: path.to_path_buf(),
+                archive_date,
+                prefix: prefix.to_string(),
+            })
+        },
+        Err(err) => None
+    })
+}
+
 #[derive(Debug)]
 pub struct ArchiveMetadata {
     pub prefix: String,
-    pub full_path: PathBuf,
     pub archive_date: DateTime<Utc>,
+    pub full_path: PathBuf,
 }

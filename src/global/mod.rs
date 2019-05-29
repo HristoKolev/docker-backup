@@ -11,6 +11,7 @@ pub mod bash_shell;
 pub mod do_try;
 pub mod email;
 pub mod email_report;
+pub mod cli;
 
 use self::prelude::*;
 use self::app_config::{AppConfig, read_config};
