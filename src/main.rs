@@ -10,8 +10,8 @@ mod run_backup;
 use crate::global::prelude::*;
 use crate::run_backup::{create_archive, list_archives};
 use crate::global::{do_try, app_config, logger};
-use crate::global::cli::command_config;
 use clap::Arg;
+use std::ffi::{OsStr, OsString};
 
 fn main() {
 
@@ -22,22 +22,9 @@ fn main() {
 
 fn main_result() -> Result {
 
-    let matches = command_config("create", |x| {
+    let command_name = ::std::env::args().skip(1).take(1).collect::<Vec<String>>().get(0).map(|x| x.to_string());
 
-        x.arg(Arg::with_name("backup-type")
-            .short("t")
-            .long("backup-type")
-            .value_name("backup-type")
-            .help("The type of backup you want to create.")
-            .required(true)
-            .takes_value(true)
-        )
-    });
-
-    let config = matches.value_of("backup-type");
-
-    println!("{}", config.unwrap());
-
+    println!("{:#?}", command_name);
 
 //    create_archive("docker-volumes", |work_path| {
 //
