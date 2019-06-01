@@ -18,8 +18,11 @@ use self::app_config::{AppConfig, read_config};
 use self::custom_sentry_client::CustomSentryClient;
 use self::error_handler::handle_error;
 use self::logging::*;
+use self::cli::CliRunner;
 
 use chrono::{DateTime, Utc};
+use std::collections::HashMap;
+use std::sync::Mutex;
 
 static APP_CONFIG_FILE_NAME: &str = "app-config.json";
 static LOG_FILE_NAME: &str = "log/log.txt";
@@ -32,6 +35,7 @@ pub struct Global {
     pub logger: Logger,
     pub config_directory: String,
     pub app_start_time: DateTime<Utc>,
+    pub cli: CliRunner,
 }
 
 /// Error wrapper of the global object builder.
@@ -69,7 +73,8 @@ fn create_global_result() -> Result<Global> {
         sentry,
         logger,
         config_directory: config_directory.get_as_string()?,
-        app_start_time: Utc::now()
+        app_start_time: Utc::now(),
+        cli: CliRunner::new()
     })
 }
 
@@ -133,6 +138,13 @@ pub fn app_start_time() -> &'static DateTime<Utc> {
 
     &INSTANCE.app_start_time
 }
+
+#[allow(unused)]
+pub fn cli() -> &'static CliRunner {
+
+    &INSTANCE.cli
+}
+
 
 #[allow(unused_macros)]
 macro_rules! log {

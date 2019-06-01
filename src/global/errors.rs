@@ -153,6 +153,15 @@ impl From<std::sync::PoisonError<std::sync::MutexGuard<'_, Vec<String>>>> for Cu
     }
 }
 
+impl From<std::sync::PoisonError<std::sync::MutexGuard<'_, std::collections::HashMap<std::string::String, std::boxed::Box<(dyn std::ops::Fn() -> std::result::Result<(), crate::global::errors::CustomError> + std::marker::Send + std::marker::Sync + 'static)>>>>> for CustomError {
+    fn from(err: std::sync::PoisonError<std::sync::MutexGuard<'_, std::collections::HashMap<std::string::String, std::boxed::Box<(dyn std::ops::Fn() -> std::result::Result<(), crate::global::errors::CustomError> + std::marker::Send + std::marker::Sync + 'static)>>>>) -> Self {
+        CustomError {
+            kind: PoisonedError(format!("{:#?}", err)),
+            backtrace: Backtrace::new(),
+        }
+    }
+}
+
 impl From<lettre::smtp::error::Error> for CustomError {
     fn from(err: lettre::smtp::error::Error) -> Self {
         CustomError {

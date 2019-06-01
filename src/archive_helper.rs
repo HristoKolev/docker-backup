@@ -1,12 +1,13 @@
 use std::path::{Path, PathBuf};
 
 use uuid::Uuid;
+use chrono::Utc;
+use chrono::offset::TimeZone;
+use clap::Arg;
 
 use crate::global::{do_try, app_config};
 use crate::global::prelude::*;
 use sentry::internals::DateTime;
-use chrono::Utc;
-use chrono::offset::TimeZone;
 
 pub fn create_archive<F>(prefix: &str, func: F) -> Result
     where F: FnOnce(&str) -> Result {
@@ -146,4 +147,15 @@ pub struct ArchiveMetadata {
     pub prefix: String,
     pub archive_date: DateTime<Utc>,
     pub full_path: PathBuf,
+}
+
+pub enum ArchiveType {
+    DockerVolumes
+}
+
+pub fn parse_archive_type(archive_type_string: &str) -> Result<ArchiveType> {
+    match archive_type_string {
+        "docker-volumes" => Ok(ArchiveType::DockerVolumes),
+        _ => Err(CustomError::from_message(&format!("Backup type not found: {}", archive_type_string)))
+    }
 }

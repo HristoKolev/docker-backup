@@ -5,13 +5,15 @@ extern crate lazy_static;
 
 #[macro_use]
 mod global;
-mod run_backup;
+mod archive_helper;
+mod create_archive;
 
 use crate::global::prelude::*;
-use crate::run_backup::{create_archive, list_archives};
+use crate::create_archive::{create_archive};
 use crate::global::{do_try, app_config, logger};
 use clap::Arg;
 use std::ffi::{OsStr, OsString};
+use std::collections::HashMap;
 
 fn main() {
 
@@ -22,9 +24,10 @@ fn main() {
 
 fn main_result() -> Result {
 
-    let command_name = ::std::env::args().skip(1).take(1).collect::<Vec<String>>().get(0).map(|x| x.to_string());
+    cli().register_command("create", create_archive)?;
 
-    println!("{:#?}", command_name);
+    cli().run()?;
+
 
 //    create_archive("docker-volumes", |work_path| {
 //
