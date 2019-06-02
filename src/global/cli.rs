@@ -1,4 +1,4 @@
-use clap::{App, ArgMatches, Arg};
+use clap::{App, ArgMatches};
 use std::ffi::OsString;
 
 use crate::global::prelude::*;
@@ -16,10 +16,10 @@ impl CliRunner {
         }
     }
 
-    pub fn command_config<F>(&self, command_name: &str, f: F) -> ArgMatches
+    pub fn command_config<F>(&self, f: F) -> ArgMatches
         where F: for<'a, 'b> FnOnce(App<'a, 'b>) -> App<'a, 'b> {
 
-        let mut matches = App::new(format!("XDXD Backup - {}", command_name))
+        let mut matches = App::new(format!("XDXD Backup"))
             .version("1.0")
             .author("Hristo Kolev")
             .about("Backs things up.");
@@ -27,7 +27,7 @@ impl CliRunner {
         matches = f(matches);
 
         let mut i = 0;
-        let args = ::std::env::args_os().filter(|x| {
+        let args = ::std::env::args_os().filter(|_| {
 
             let result = i != 1;
 
@@ -48,19 +48,37 @@ impl CliRunner {
         Ok(())
     }
 
-    pub fn run(&self) -> Result{
+    pub fn run(&self) -> Result {
 
-        let command_name = ::std::env::args()
+        let command_name = ::std::env::args_os()
             .skip(1).take(1)
-            .collect::<Vec<String>>().get(0)
-            .map(|x| x.to_string());
+            .collect::<Vec<OsString>>().get(0)
+            .map(|x| x.get_as_string());
+
+        let command_map = self.command_map.lock()?;
+
+        let available_commands = command_map.iter()
+            .map(|(key, _val)| key.to_string())
+            .collect::<Vec<String>>();
 
         if let Some(command_name) = command_name {
+            let command_name = command_name?.to_lowercase();
 
+            if let Some(command) = command_map.get(&command_name) {
+                command()?;
+            } else {
+                return Err(CustomError::user_error(&format!(
+                    "Please provide a valid command. Available commands: {}", available_commands.join(", ")
+                )));
+            }
         } else {
-            super::logger().log()?;
+
+            return Err(CustomError::user_error(&format!(
+                "Please provide a valid command. Available commands: {}", available_commands.join(", ")
+            )));
         }
 
+        Ok(())
     }
 }
 

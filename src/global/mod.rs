@@ -21,8 +21,6 @@ use self::logging::*;
 use self::cli::CliRunner;
 
 use chrono::{DateTime, Utc};
-use std::collections::HashMap;
-use std::sync::Mutex;
 
 static APP_CONFIG_FILE_NAME: &str = "app-config.json";
 static LOG_FILE_NAME: &str = "log/log.txt";

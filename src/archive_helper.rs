@@ -3,11 +3,12 @@ use std::path::{Path, PathBuf};
 use uuid::Uuid;
 use chrono::Utc;
 use chrono::offset::TimeZone;
-use clap::Arg;
 
 use crate::global::{do_try, app_config};
 use crate::global::prelude::*;
 use sentry::internals::DateTime;
+
+static ARCHIVE_EXTENSION: &str = "backup";
 
 pub fn create_archive<F>(prefix: &str, func: F) -> Result
     where F: FnOnce(&str) -> Result {
@@ -61,10 +62,11 @@ pub fn create_archive<F>(prefix: &str, func: F) -> Result
             .create_directory()?;
 
         let archive_file_name = format!(
-            "{}.{}.{}.backup",
+            "{}.{}.{}.{}",
             prefix,
             now.format("%Y-%m-%d").to_string(),
-            now.timestamp().to_string()
+            now.timestamp().to_string(),
+            ARCHIVE_EXTENSION
         );
 
         let archive_file_path = daily_folder
@@ -100,8 +102,14 @@ pub fn list_archives(prefix: &str) -> Result<Vec<ArchiveMetadata>> {
 
             let archive_path = archive_file_result?.path();
 
-            match read_metadata(&archive_path)? {
-                Some(x) => archives.push(x),
+            let metadata = read_metadata(&archive_path)?;
+
+            match metadata {
+                Some(x) => {
+                    if x.prefix == prefix {
+                        archives.push(x)
+                    }
+                },
                 None => ()
             }
         }
@@ -123,32 +131,38 @@ pub fn read_metadata(path: &Path) -> Result<Option<ArchiveMetadata>> {
     let timestamp = parts[2];
     let extension = parts[3];
 
-    if extension != "backup" {
+    if extension != ARCHIVE_EXTENSION {
         return Ok(None);
     }
 
     Ok(match timestamp.parse::<i64>() {
         Ok(epoch) => {
 
-            let archive_date = Utc.timestamp(epoch, 0);
+            let archive_type = match parse_archive_type(prefix) {
+                Ok(x) => x,
+                Err(_) => return Ok(None)
+            };
 
             Some(ArchiveMetadata {
                 full_path: path.to_path_buf(),
-                archive_date,
+                archive_date: Utc.timestamp(epoch, 0),
                 prefix: prefix.to_string(),
+                archive_type
             })
         },
-        Err(err) => None
+        Err(_) => None
     })
 }
 
 #[derive(Debug)]
 pub struct ArchiveMetadata {
     pub prefix: String,
+    pub archive_type: ArchiveType,
     pub archive_date: DateTime<Utc>,
     pub full_path: PathBuf,
 }
 
+#[derive(Debug)]
 pub enum ArchiveType {
     DockerVolumes
 }
@@ -156,6 +170,6 @@ pub enum ArchiveType {
 pub fn parse_archive_type(archive_type_string: &str) -> Result<ArchiveType> {
     match archive_type_string {
         "docker-volumes" => Ok(ArchiveType::DockerVolumes),
-        _ => Err(CustomError::from_message(&format!("Backup type not found: {}", archive_type_string)))
+        _ => Err(CustomError::user_error(&format!("Archive type not found: {}", archive_type_string)))
     }
 }

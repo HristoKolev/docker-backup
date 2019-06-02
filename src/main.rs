@@ -7,13 +7,13 @@ extern crate lazy_static;
 mod global;
 mod archive_helper;
 mod create_archive;
+mod list_archives;
 
 use crate::global::prelude::*;
-use crate::create_archive::{create_archive};
-use crate::global::{do_try, app_config, logger};
-use clap::Arg;
-use std::ffi::{OsStr, OsString};
-use std::collections::HashMap;
+use crate::global::errors::CustomErrorKind;
+
+use crate::create_archive::create_archive_command;
+use crate::list_archives::list_archive_command;
 
 fn main() {
 
@@ -24,43 +24,20 @@ fn main() {
 
 fn main_result() -> Result {
 
-    cli().register_command("create", create_archive)?;
+    cli().register_command("create", create_archive_command)?;
+    cli().register_command("list", list_archive_command)?;
 
-    cli().run()?;
-
-
-//    create_archive("docker-volumes", |work_path| {
-//
-//        let app_config = app_config();
-//
-//        let ps_result = bash_exec!("echo `docker ps -a -q`");
-//
-//        do_try::run(|| {
-//
-//            bash_exec!(
-//                "rsync -a {}/ {}/",
-//                app_config.docker_config.volumes_path,
-//                work_path
-//            );
-//
-//            bash_exec!("docker pause {}", ps_result.stdout);
-//
-//            bash_exec!(
-//                "rsync -a {}/ {}/",
-//                app_config.docker_config.volumes_path,
-//                work_path
-//            );
-//
-//            Ok(())
-//        }).finally(|| {
-//
-//            bash_exec!("docker unpause {}", ps_result.stdout);
-//
-//            Ok(())
-//        })?;
-//
-//        Ok(())
-//    })?;
+    match cli().run() {
+        Err(err) => {
+            if let CustomErrorKind::UserError(message) = err.kind {
+                log!("Error: {}", message);
+                ::std::process::exit(1);
+            } else {
+                return Err(err);
+            }
+        },
+        Ok(_) => ()
+    };
 
     Ok(())
 }

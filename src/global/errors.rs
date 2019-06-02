@@ -18,6 +18,7 @@ pub enum CustomErrorKind {
     SmtpError(lettre::smtp::error::Error),
     Failure(failure::Error),
     HandlebarsError(handlebars::TemplateRenderError),
+    UserError(String),
 }
 
 #[derive(Debug)]
@@ -41,6 +42,7 @@ impl fmt::Debug for CustomErrorKind {
             SmtpError(err) => return err.fmt(f),
             Failure(err) => return err.fmt(f),
             HandlebarsError(err) => return err.fmt(f),
+            UserError(err) => return err.fmt(f),
         };
     }
 }
@@ -60,6 +62,7 @@ impl ToString for CustomErrorKind {
             SmtpError(err) => return err.to_string(),
             Failure(err) => return err.to_string(),
             HandlebarsError(err) => return err.to_string(),
+            UserError(err) => return err.to_string(),
         }
     }
 }
@@ -68,6 +71,13 @@ impl CustomError {
     pub fn from_message(message: &str) -> CustomError {
         CustomError {
             kind: ErrorMessage(message.to_string()),
+            backtrace: Backtrace::new(),
+        }
+    }
+
+    pub fn user_error(message: &str) -> CustomError {
+        CustomError {
+            kind: UserError(message.to_string()),
             backtrace: Backtrace::new(),
         }
     }
@@ -143,7 +153,6 @@ impl From<std::sync::PoisonError<std::sync::MutexGuard<'_, super::logging::FileA
     }
 }
 
-
 impl From<std::sync::PoisonError<std::sync::MutexGuard<'_, Vec<String>>>> for CustomError {
     fn from(err: std::sync::PoisonError<std::sync::MutexGuard<'_, Vec<String>>>) -> Self {
         CustomError {
@@ -205,4 +214,3 @@ impl<R, E> ResultExtensionsReplaceError<R> for std::result::Result<R, E> {
         }
     }
 }
-
