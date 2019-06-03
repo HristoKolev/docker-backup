@@ -18,7 +18,7 @@ pub fn handle_error(error: &CustomError) -> Result {
 pub fn handle_fatal_error(error: &CustomError) -> Result {
 
     let standard_error_handler_result = handle_error(error);
-    let email_result = email_report::send_report(&error);
+    let email_result = email_report::send_error_report(&error);
 
     standard_error_handler_result?;
     email_result?;

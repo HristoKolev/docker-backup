@@ -17,6 +17,7 @@ pub struct ArchiveConfig {
     pub cache_path: String,
     pub temp_path: String,
     pub archive_password: String,
+    pub cache_expiry_days: i64,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

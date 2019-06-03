@@ -373,15 +373,17 @@
                 <table border="0" cellpadding="0" cellspacing="0" width="900" id="templateContainer" style="background: #e1f3ff; border-radius: .3rem; padding: 1rem;">
                     <tr>
                         <td align="center" valign="top">
-                            An error occurred while running `docker-backup` on <span style='color: red;'>{{app_config.hostname}}</span>.
+                            xdxd-backup report on <span style='color: red;'>{{app_config.hostname}}</span>.
                         </td>
                     </tr>
 
+                    {{#if formatted_error}}
                     <tr>
                         <td align="" valign="top">
                             <b>Error</b>:<pre style='border: 1px solid gray; padding: 5px;'>{{formatted_error}}</pre>
                         </td>
                     </tr>
+                    {{/if}}
 
                     <tr>
                         <td align="" valign="top">

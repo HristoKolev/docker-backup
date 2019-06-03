@@ -7,6 +7,7 @@ use chrono::offset::TimeZone;
 use crate::global::{do_try, app_config};
 use crate::global::prelude::*;
 use sentry::internals::DateTime;
+use time::Duration;
 
 static ARCHIVE_EXTENSION: &str = "backup";
 
@@ -109,7 +110,7 @@ pub fn get_daily_archive_path(prefix: &str) -> Result<String> {
     Ok(archive_file_path)
 }
 
-pub fn list_archives(prefix: &str) -> Result<Vec<ArchiveMetadata>> {
+pub fn list_archives(prefix_option: Option<&str>) -> Result<Vec<ArchiveMetadata>> {
 
     let app_config = app_config();
 
@@ -129,7 +130,11 @@ pub fn list_archives(prefix: &str) -> Result<Vec<ArchiveMetadata>> {
 
             match metadata {
                 Some(x) => {
-                    if x.prefix == prefix {
+                    if let Some(prefix) = prefix_option {
+                        if &x.prefix == prefix {
+                            archives.push(x)
+                        }
+                    } else {
                         archives.push(x)
                     }
                 },
@@ -195,4 +200,27 @@ pub fn parse_archive_type(archive_type_string: &str) -> Result<ArchiveType> {
         "docker-volumes" => Ok(ArchiveType::DockerVolumes),
         _ => Err(CustomError::user_error(&format!("Archive type not found: {}", archive_type_string)))
     }
+}
+
+pub fn clear_cache(prefix: Option<&str>) -> Result {
+
+    log!("Clearing local cache...");
+
+    let app_config = app_config();
+
+    let list = list_archives(prefix)?;
+
+    for item in list {
+
+        let expiration_time = *app_start_time() - Duration::days(app_config.archive_config.cache_expiry_days);
+
+        if item.archive_date < expiration_time {
+
+            log!("Deleting `{}` ...", item.full_path.get_as_string()?);
+
+            ::std::fs::remove_file(item.full_path)?;
+        }
+    }
+
+    Ok(())
 }

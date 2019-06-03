@@ -1,15 +1,15 @@
 use clap::Arg;
 
 use crate::global::prelude::*;
-use crate::archive_helper::{list_archives, ArchiveType, parse_archive_type};
+use crate::archive_helper::{ArchiveType, parse_archive_type, clear_cache};
 
-struct ListCommandOptions {
+struct ClearCacheCommandOptions {
     #[allow(unused)]
     archive_type: Option<ArchiveType>,
     prefix: Option<String>,
 }
 
-fn list_command_options() -> Result<ListCommandOptions> {
+fn clear_cache_command_options() -> Result<ClearCacheCommandOptions> {
 
     const ARCHIVE_TYPE_VALUE: &str = "archive-type";
 
@@ -19,7 +19,7 @@ fn list_command_options() -> Result<ListCommandOptions> {
             .short("t")
             .long(ARCHIVE_TYPE_VALUE)
             .value_name(ARCHIVE_TYPE_VALUE)
-            .help("The type of archive you want to list.")
+            .help("The type of archive you want to clear the cache of.")
             .required(false)
             .takes_value(true)
         )
@@ -32,28 +32,17 @@ fn list_command_options() -> Result<ListCommandOptions> {
         None => None
     };
 
-    Ok(ListCommandOptions {
+    Ok(ClearCacheCommandOptions {
         prefix: archive_type_string.map(|x| x.to_string()),
         archive_type
     })
 }
 
-pub fn list_archive_command() -> Result {
+pub fn clear_cache_command() -> Result {
 
-    let options = list_command_options()?;
+    let options = clear_cache_command_options()?;
 
-    let list = list_archives(options.prefix.as_ref().map(String::as_ref))?;
-
-    for item in list {
-        log!(
-            "{} | {} | {}",
-            item.full_path.file_name_as_string()?,
-            item.prefix,
-            item.archive_date.format("%Y-%m-%d %H:%M:%S").to_string()
-        );
-    }
+    clear_cache(options.prefix.as_ref().map(String::as_ref))?;
 
     Ok(())
 }
-
-

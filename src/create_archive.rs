@@ -2,7 +2,7 @@ use clap::Arg;
 
 use crate::global::{do_try, app_config};
 use crate::global::prelude::*;
-use crate::archive_helper::{ArchiveType, parse_archive_type, create_archive};
+use crate::archive_helper::{ArchiveType, parse_archive_type, create_archive, clear_cache};
 
 struct CreateCommandOptions {
     archive_type: ArchiveType,
@@ -17,7 +17,7 @@ fn create_command_options() -> Result<CreateCommandOptions> {
     const FILE_VALUE: &str = "file";
     const NO_ENCRYPTION_VALUE: &str = "no-encryption";
 
-    let matches =  cli().command_config(|x| {
+    let matches = cli().command_config(|x| {
 
         x.arg(Arg::with_name(ARCHIVE_TYPE_VALUE)
             .short("t")
@@ -116,6 +116,10 @@ pub fn create_archive_command() -> Result {
         options.no_encryption,
         func
     )?;
+
+    clear_cache(Some(&options.prefix))?;
+
+    email_report::send_success_report(&options.prefix)?;
 
     Ok(())
 }

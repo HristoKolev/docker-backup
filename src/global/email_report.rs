@@ -6,17 +6,22 @@ use super::app_config;
 use super::prelude::*;
 use crate::global::logger;
 
-fn render_report(error: &CustomError) -> Result<String> {
-
-    let html_template = include_str!("email-template.html");
+pub fn send_error_report(error: &CustomError) -> Result {
 
     let app_config = app_config();
+
+    let subject = format!(
+        "[FAILURE] `xdxd-backup` An error occurred on `{}`.",
+        app_config.hostname
+    );
+
+    let html_template = include_str!("email-template.html");
 
     let logs = logger().get_logs()?.join("\n");
 
     let registry = Handlebars::new();
 
-    let rendered = registry.render_template(
+    let report_content = registry.render_template(
         html_template,
         &json!({
             "app_config": app_config,
@@ -25,19 +30,35 @@ fn render_report(error: &CustomError) -> Result<String> {
          })
     )?;
 
-    Ok(rendered)
+    send_mail(&subject, &report_content)?;
+
+    Ok(())
 }
 
-pub fn send_report(error: &CustomError) -> Result {
+
+pub fn send_success_report(prefix: &str) -> Result {
 
     let app_config = app_config();
 
     let subject = format!(
-        "[FAILURE] An error occurred while running `docker-backup` on `{}`.",
+        "[SUCCESS] `xdxd-backup` An archive of type `{}` was created on `{}`.",
+        prefix,
         app_config.hostname
     );
 
-    let report_content = render_report(&error)?;
+    let html_template = include_str!("email-template.html");
+
+    let logs = logger().get_logs()?.join("\n");
+
+    let registry = Handlebars::new();
+
+    let report_content = registry.render_template(
+        html_template,
+        &json!({
+            "app_config": app_config,
+            "logs": logs,
+         })
+    )?;
 
     send_mail(&subject, &report_content)?;
 
