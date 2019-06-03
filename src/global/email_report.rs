@@ -39,7 +39,7 @@ pub fn send_report(error: &CustomError) -> Result {
 
     let report_content = render_report(&error)?;
 
-    send_mail(&*subject, &*report_content)?;
+    send_mail(&subject, &report_content)?;
 
     Ok(())
 }
@@ -49,9 +49,9 @@ fn send_mail(subject: &str, content: &str) -> Result {
     let app_config = app_config();
 
     let email_client = email::EmailClient::new(
-        &*app_config.email_config.smtp_username,
-        &*app_config.email_config.smtp_password,
-        &*app_config.email_config.smtp_host,
+        &app_config.email_config.smtp_username,
+        &app_config.email_config.smtp_password,
+        &app_config.email_config.smtp_host,
         app_config.email_config.smtp_port,
     );
 

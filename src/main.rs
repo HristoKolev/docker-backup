@@ -16,9 +16,7 @@ use crate::create_archive::create_archive_command;
 use crate::list_archives::list_archive_command;
 
 fn main() {
-
     global::initialize();
-
     main_result().crash_on_error();
 }
 

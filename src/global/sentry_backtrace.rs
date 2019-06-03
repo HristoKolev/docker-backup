@@ -96,7 +96,6 @@ pub fn demangle_symbol(s: &str) -> String {
         .to_string()
 }
 
-#[allow(unused)]
 pub fn error_typename<D: fmt::Debug>(error: D) -> String {
     format!("{:?}", error)
         .split(&['(', '{'][..])
@@ -106,7 +105,6 @@ pub fn error_typename<D: fmt::Debug>(error: D) -> String {
         .into()
 }
 
-#[allow(unused)]
 pub fn backtrace_to_stacktrace(bt: &Backtrace) -> Option<Stacktrace> {
     let frames = bt
         .frames()
@@ -212,7 +210,6 @@ pub fn trim_stacktrace<F>(stacktrace: &mut Stacktrace, f: F)
 }
 
 /// Checks if a function is considered to be not in-app
-#[allow(unused)]
 pub fn is_sys_function(func: &str) -> bool {
     WELL_KNOWN_SYS_MODULES
         .iter()

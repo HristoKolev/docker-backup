@@ -41,7 +41,7 @@ impl<R> ResultExtensionsCrashOnError<R> for Result<R> {
                 handle_fatal_error(&err)
                     .expect(&format!("An error occurred while handling an error. {:#?}", &err));
 
-                std::process::exit(1)
+                ::std::process::exit(1)
             }
         }
     }

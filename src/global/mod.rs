@@ -55,7 +55,7 @@ fn create_global_result() -> Result<Global> {
         ::std::process::exit(1);
     }
 
-    let app_config = read_config(&*config_file_path.get_as_string()?)?;
+    let app_config = read_config(&config_file_path.get_as_string()?)?;
 
     let sentry = CustomSentryClient::new(&app_config.sentry_dsn)?;
 
@@ -105,7 +105,7 @@ fn set_panic_hook () {
 /// Should be called first thing in the entry point.
 pub fn initialize() {
 
-    std::env::set_var("RUST_BACKTRACE", "1");
+    ::std::env::set_var("RUST_BACKTRACE", "1");
 
     set_panic_hook();
 
@@ -113,36 +113,30 @@ pub fn initialize() {
 }
 
 /// Returns a static reference of the app config.
-#[allow(unused)]
 pub fn app_config() -> &'static AppConfig {
 
     &INSTANCE.app_config
 }
 
-#[allow(unused)]
 pub fn sentry_client() -> &'static CustomSentryClient {
 
     &INSTANCE.sentry
 }
 
-#[allow(unused)]
 pub fn logger() -> &'static Logger {
 
     &INSTANCE.logger
 }
 
-#[allow(unused)]
 pub fn app_start_time() -> &'static DateTime<Utc> {
 
     &INSTANCE.app_start_time
 }
 
-#[allow(unused)]
 pub fn cli() -> &'static CliRunner {
 
     &INSTANCE.cli
 }
-
 
 #[allow(unused_macros)]
 macro_rules! log {

@@ -47,7 +47,6 @@ impl CustomSentryClient {
         Ok(())
     }
 
-    #[allow(unused)]
     pub fn send_error(&self, error: &CustomError) -> Result {
 
         let stacktrace = self.get_stacktrace(error)?;
@@ -157,7 +156,7 @@ impl CustomSentryClient {
         let request_body = serde_json::to_string(event)?;
 
         let request = client
-            .post(&*request_url)
+            .post(&request_url)
             .body(request_body)
             .header("X-Sentry-Auth",&*auth_header);
 
@@ -172,8 +171,8 @@ impl CustomSentryClient {
 
         event.server_name = utils::server_name().map(Cow::Owned);
         event.platform = "native".into();
-        event.release = std::env::var("SENTRY_RELEASE").ok().map(Cow::Owned);
-        event.environment = std::env::var("SENTRY_ENVIRONMENT")
+        event.release = ::std::env::var("SENTRY_RELEASE").ok().map(Cow::Owned);
+        event.environment = ::std::env::var("SENTRY_ENVIRONMENT")
             .ok().map(Cow::Owned).or_else(|| {
                 Some(Cow::Borrowed(if cfg!(debug_assertions) {
                     "debug"

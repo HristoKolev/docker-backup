@@ -5,7 +5,6 @@ use crate::global::prelude::*;
 use crate::archive_helper::{ArchiveType, parse_archive_type, create_archive};
 
 struct CreateCommandOptions {
-    #[allow(unused)]
     archive_type: ArchiveType,
     prefix: String,
     file_path: Option<String>,
@@ -67,42 +66,56 @@ fn create_command_options() -> Result<CreateCommandOptions> {
     })
 }
 
+fn create_docker_volumes_archive(work_path: &str) -> Result {
+
+    let app_config = app_config();
+
+    let config = app_config.docker_config.clone()
+        .ok_or_else(|| CustomError::from_message("DockerVolumes archiving is not configured."))?;
+
+    let ps_result = bash_exec!("echo `docker ps -a -q`");
+
+    do_try::run(|| {
+
+        bash_exec!(
+                "rsync -a {}/ {}/",
+                config.volumes_path,
+                work_path
+            );
+
+        bash_exec!("docker pause {}", ps_result.stdout);
+
+        bash_exec!(
+                "rsync -a {}/ {}/",
+                config.volumes_path,
+                work_path
+            );
+
+        Ok(())
+    }).finally(|| {
+
+        bash_exec!("docker unpause {}", ps_result.stdout);
+
+        Ok(())
+    })?;
+
+    Ok(())
+}
+
 pub fn create_archive_command() -> Result {
 
     let options = create_command_options()?;
 
-    create_archive(&options.prefix, |work_path| {
+    let func = match options.archive_type {
+        ArchiveType::DockerVolumes => create_docker_volumes_archive
+    };
 
-        let app_config = app_config();
-
-        let ps_result = bash_exec!("echo `docker ps -a -q`");
-
-        do_try::run(|| {
-
-            bash_exec!(
-                "rsync -a {}/ {}/",
-                app_config.docker_config.volumes_path,
-                work_path
-            );
-
-            bash_exec!("docker pause {}", ps_result.stdout);
-
-            bash_exec!(
-                "rsync -a {}/ {}/",
-                app_config.docker_config.volumes_path,
-                work_path
-            );
-
-            Ok(())
-        }).finally(|| {
-
-            bash_exec!("docker unpause {}", ps_result.stdout);
-
-            Ok(())
-        })?;
-
-        Ok(())
-    })?;
+    create_archive(
+        &options.prefix,
+        options.file_path,
+        options.no_encryption,
+        func
+    )?;
 
     Ok(())
 }

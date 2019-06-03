@@ -10,7 +10,12 @@ use sentry::internals::DateTime;
 
 static ARCHIVE_EXTENSION: &str = "backup";
 
-pub fn create_archive<F>(prefix: &str, func: F) -> Result
+pub fn create_archive<F>(
+    prefix: &str,
+    custom_file_path: Option<String>,
+    no_encryption: bool,
+    func: F
+) -> Result
     where F: FnOnce(&str) -> Result {
 
     let app_config = app_config();
@@ -28,7 +33,7 @@ pub fn create_archive<F>(prefix: &str, func: F) -> Result
 
         bash_exec!("mkdir -p {0} && chmod 777 {0}", uncompressed);
 
-        func(&*uncompressed)?;
+        func(&uncompressed)?;
 
         let compressed = work_path
             .combine_with("compressed-archive.tar.gz")
@@ -46,32 +51,25 @@ pub fn create_archive<F>(prefix: &str, func: F) -> Result
             .combine_with("final.enc")
             .get_as_string()?;
 
-        bash_exec!(
-            "openssl enc -aes-256-cbc -e -p -pass pass:{0} -in {1} -out {2}",
-            &app_config.archive_config.archive_password,
-            &compressed,
-            &final_archive
-        );
+        if no_encryption {
 
-        bash_exec!("rm {0} -f", compressed);
+            bash_exec!("mv {} {}", &compressed, &final_archive);
+        } else {
 
-        let now = app_start_time();
+            bash_exec!(
+                "openssl enc -aes-256-cbc -e -p -pass pass:{0} -in {1} -out {2}",
+                &app_config.archive_config.archive_password,
+                &compressed,
+                &final_archive
+            );
 
-        let daily_folder = Path::new(&app_config.archive_config.cache_path)
-            .combine_with(&now.format("day_%Y_%m_%d").to_string())
-            .create_directory()?;
+            bash_exec!("rm {0} -f", compressed);
+        }
 
-        let archive_file_name = format!(
-            "{}.{}.{}.{}",
-            prefix,
-            now.format("%Y-%m-%d").to_string(),
-            now.timestamp().to_string(),
-            ARCHIVE_EXTENSION
-        );
-
-        let archive_file_path = daily_folder
-            .combine_with(&archive_file_name)
-            .get_as_string()?;
+        let archive_file_path = match custom_file_path {
+            Some(x) => x,
+            None => get_daily_archive_path(prefix)?
+        };
 
         bash_exec!("mv {} {}", &final_archive, &archive_file_path);
 
@@ -84,6 +82,31 @@ pub fn create_archive<F>(prefix: &str, func: F) -> Result
     })?;
 
     Ok(())
+}
+
+pub fn get_daily_archive_path(prefix: &str) -> Result<String> {
+
+    let app_config = app_config();
+
+    let now = app_start_time();
+
+    let daily_folder = Path::new(&app_config.archive_config.cache_path)
+        .combine_with(&now.format("day_%Y_%m_%d").to_string())
+        .create_directory()?;
+
+    let archive_file_name = format!(
+        "{}.{}.{}.{}",
+        prefix,
+        now.format("%Y-%m-%d").to_string(),
+        now.timestamp().to_string(),
+        ARCHIVE_EXTENSION
+    );
+
+    let archive_file_path = daily_folder
+        .combine_with(&archive_file_name)
+        .get_as_string()?;
+
+    Ok(archive_file_path)
 }
 
 pub fn list_archives(prefix: &str) -> Result<Vec<ArchiveMetadata>> {

@@ -169,7 +169,6 @@ impl Logger {
         Ok(())
     }
 
-    #[allow(unused)]
     pub fn get_logs(&self) -> Result<Vec<String>> {
 
         let logs = self.in_memory_appender.entries.lock()?;

@@ -19,7 +19,7 @@ pub struct ArchiveConfig {
     pub archive_password: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DockerConfig {
     pub volumes_path: String,
 }
@@ -30,11 +30,11 @@ pub struct AppConfig {
     pub sentry_dsn: String,
     pub email_config: EmailConfig,
     pub archive_config: ArchiveConfig,
-    pub docker_config: DockerConfig,
+    pub docker_config: Option<DockerConfig>,
 }
 
 pub fn read_config(file_path: &str) -> Result<AppConfig> {
     let json_content = ::std::fs::read_to_string(file_path)?;
-    let materialized = serde_json::from_str(&*json_content)?;
+    let materialized = serde_json::from_str(&json_content)?;
     Ok(materialized)
 }
