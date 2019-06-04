@@ -57,9 +57,11 @@ impl CliRunner {
 
         let command_map = self.command_map.lock()?;
 
-        let available_commands = command_map.iter()
+        let mut available_commands = command_map.iter()
             .map(|(key, _val)| key.to_string())
             .collect::<Vec<String>>();
+
+        available_commands.sort_by(|a,b| a.cmp(b));
 
         if let Some(command_name) = command_name {
             let command_name = command_name?.to_lowercase();
@@ -72,7 +74,6 @@ impl CliRunner {
                 )));
             }
         } else {
-
             return Err(CustomError::user_error(&format!(
                 "Please provide a valid command. Available commands: {}", available_commands.join(", ")
             )));

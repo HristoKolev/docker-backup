@@ -11,7 +11,7 @@ pub fn send_error_report(error: &CustomError) -> Result {
     let app_config = app_config();
 
     let subject = format!(
-        "[FAILURE] `xdxd-backup` An error occurred on `{}`.",
+        "[FAILURE] xdxd-backup | An error occurred on `{}`.",
         app_config.hostname
     );
 
@@ -21,10 +21,13 @@ pub fn send_error_report(error: &CustomError) -> Result {
 
     let registry = Handlebars::new();
 
+    let now = app_start_time();
+
     let report_content = registry.render_template(
         html_template,
         &json!({
             "app_config": app_config,
+            "timestamp": now.format("%+").to_string(),
             "formatted_error": format!("{:#?}", error),
             "logs": logs,
          })
@@ -41,7 +44,7 @@ pub fn send_success_report(prefix: &str) -> Result {
     let app_config = app_config();
 
     let subject = format!(
-        "[SUCCESS] `xdxd-backup` An archive of type `{}` was created on `{}`.",
+        "[SUCCESS] xdxd-backup | An archive of type `{}` was created on `{}`.",
         prefix,
         app_config.hostname
     );
@@ -52,10 +55,13 @@ pub fn send_success_report(prefix: &str) -> Result {
 
     let registry = Handlebars::new();
 
+    let now = app_start_time();
+
     let report_content = registry.render_template(
         html_template,
         &json!({
             "app_config": app_config,
+            "timestamp": now.format("%+").to_string(),
             "logs": logs,
          })
     )?;

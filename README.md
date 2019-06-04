@@ -1,2 +1,2 @@
-# docker-backup
-A backup system for docker.
+# xdxd-backup
+A backup system.
