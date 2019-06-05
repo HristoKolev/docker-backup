@@ -58,10 +58,10 @@ pub fn create_archive<F>(
         } else {
 
             bash_exec!(
-                "openssl enc -aes-256-cbc -e -p -pass pass:{0} -in {1} -out {2}",
+                r#"echo "{0}" | gpg --symmetric --batch --passphrase-fd 0 --cipher-algo AES256 --output {1} {2}"#,
                 &app_config.archive_config.archive_password,
-                &compressed,
-                &final_archive
+                &final_archive,
+                &compressed
             );
 
             bash_exec!("rm {0} -f", compressed);
