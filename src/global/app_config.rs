@@ -2,7 +2,7 @@ use serde::{Serialize, Deserialize};
 
 use super::prelude::*;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct EmailConfig {
     pub email_enabled: bool,
     pub notification_emails: Vec<String>,
@@ -12,7 +12,7 @@ pub struct EmailConfig {
     pub smtp_port: u16,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ArchiveConfig {
     pub cache_path: String,
     pub temp_path: String,
@@ -21,11 +21,20 @@ pub struct ArchiveConfig {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct DockerConfig {
-    pub volumes_path: String,
+pub struct CustomArchiveConfig {
+    pub cache_path: Option<String>,
+    pub temp_path: Option<String>,
+    pub archive_password: Option<String>,
+    pub cache_expiry_days: Option<i64>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct DockerConfig {
+    pub volumes_path: String,
+    pub custom_archive_config: Option<CustomArchiveConfig>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AppConfig {
     pub hostname: String,
     pub sentry_dsn: String,

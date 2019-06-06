@@ -4,24 +4,25 @@ use uuid::Uuid;
 use chrono::Utc;
 use chrono::offset::TimeZone;
 
-use crate::global::{do_try, app_config};
+use crate::global::{do_try};
 use crate::global::prelude::*;
 use sentry::internals::DateTime;
+use crate::app_config::{ArchiveConfig, CustomArchiveConfig};
 use time::Duration;
 
 static ARCHIVE_EXTENSION: &str = "backup";
 
-pub fn create_archive<F>(
-    prefix: &str,
-    custom_file_path: Option<String>,
-    no_encryption: bool,
-    func: F
-) -> Result
+pub struct ArchiveOptions {
+    pub prefix: String,
+    pub file_path: Option<String>,
+    pub no_encryption: bool,
+    pub archive_config: ArchiveConfig,
+}
+
+pub fn create_archive<F>(options: ArchiveOptions, func: F) -> Result
     where F: FnOnce(&str) -> Result {
 
-    let app_config = app_config();
-
-    let work_path = Path::new(&app_config.archive_config.temp_path)
+    let work_path = Path::new(&options.archive_config.temp_path)
         .combine_with(&Uuid::new_v4().to_string());
 
     do_try::run(|| {
@@ -52,14 +53,14 @@ pub fn create_archive<F>(
             .combine_with("final.enc")
             .get_as_string()?;
 
-        if no_encryption {
+        if options.no_encryption {
 
             bash_exec!("mv {} {}", &compressed, &final_archive);
         } else {
 
             bash_exec!(
                 r#"echo "{0}" | gpg --symmetric --batch --passphrase-fd 0 --cipher-algo AES256 --output {1} {2}"#,
-                &app_config.archive_config.archive_password,
+                &options.archive_config.archive_password,
                 &final_archive,
                 &compressed
             );
@@ -67,9 +68,9 @@ pub fn create_archive<F>(
             bash_exec!("rm {0} -f", compressed);
         }
 
-        let archive_file_path = match custom_file_path {
+        let archive_file_path = match options.file_path {
             Some(x) => x,
-            None => get_daily_archive_path(prefix)?
+            None => get_daily_archive_path(&options)?
         };
 
         bash_exec!("mv {} {}", &final_archive, &archive_file_path);
@@ -85,13 +86,12 @@ pub fn create_archive<F>(
     Ok(())
 }
 
-pub fn get_daily_archive_path(prefix: &str) -> Result<String> {
+pub fn get_daily_archive_path(options: &ArchiveOptions) -> Result<String> {
 
-    let app_config = app_config();
 
     let now = app_start_time();
 
-    let daily_folder = Path::new(&app_config.archive_config.cache_path)
+    let daily_folder = Path::new(&options.archive_config.cache_path)
         .combine_with(&now.format("day_%Y_%m_%d").to_string())
         .create_directory()?;
 
@@ -111,8 +111,6 @@ pub fn get_daily_archive_path(prefix: &str) -> Result<String> {
 }
 
 pub fn list_archives(prefix_option: Option<&str>) -> Result<Vec<ArchiveMetadata>> {
-
-    let app_config = app_config();
 
     let mut archives = Vec::new();
 
@@ -206,8 +204,6 @@ pub fn clear_cache(prefix: Option<&str>) -> Result {
 
     log!("Clearing local cache...");
 
-    let app_config = app_config();
-
     let list = list_archives(prefix)?;
 
     for item in list {
@@ -223,4 +219,42 @@ pub fn clear_cache(prefix: Option<&str>) -> Result {
     }
 
     Ok(())
+}
+
+pub trait ArchiveConfigExtensions {
+
+    fn as_config(&self) -> ArchiveConfig;
+}
+
+impl ArchiveConfigExtensions for CustomArchiveConfig {
+    fn as_config(&self) -> ArchiveConfig {
+
+        let app_config = app_config();
+
+        ArchiveConfig {
+            temp_path: self.temp_path.unwrap_or_else(|| app_config.archive_config.temp_path),
+            cache_path: self.cache_path.unwrap_or_else(|| app_config.archive_config.cache_path),
+            archive_password: self.archive_password.unwrap_or_else(|| app_config.archive_config.archive_password),
+            cache_expiry_days: self.cache_expiry_days.unwrap_or_else(|| app_config.archive_config.cache_expiry_days),
+        }
+    }
+}
+
+
+impl ArchiveConfigExtensions for Option<CustomArchiveConfig> {
+    fn as_config(&self) -> ArchiveConfig {
+
+        let app_config = app_config();
+
+        ArchiveConfig {
+            temp_path: self.map(|x| x.temp_path).flatten()
+                .unwrap_or_else(|| app_config.archive_config.temp_path),
+            cache_path: self.map(|x| x.cache_path).flatten()
+                .unwrap_or_else(|| app_config.archive_config.cache_path),
+            archive_password: self.map(|x| x.archive_password).flatten()
+                .unwrap_or_else(|| app_config.archive_config.archive_password),
+            cache_expiry_days: self.map(|x| x.cache_expiry_days).flatten()
+                .unwrap_or_else(|| app_config.archive_config.cache_expiry_days),
+        }
+    }
 }

@@ -2,7 +2,7 @@ use clap::Arg;
 
 use crate::global::{do_try, app_config};
 use crate::global::prelude::*;
-use crate::archive_helper::{ArchiveType, parse_archive_type, create_archive, clear_cache};
+use crate::archive_helper::{ArchiveType, parse_archive_type, create_archive, clear_cache, ArchiveOptions, ArchiveConfigExtensions};
 
 struct CreateCommandOptions {
     archive_type: ArchiveType,
@@ -77,19 +77,11 @@ fn create_docker_volumes_archive(work_path: &str) -> Result {
 
     do_try::run(|| {
 
-        bash_exec!(
-                "rsync -a {}/ {}/",
-                config.volumes_path,
-                work_path
-            );
+        bash_exec!("rsync -a {}/ {}/", config.volumes_path, work_path);
 
         bash_exec!("docker pause {}", ps_result.stdout);
 
-        bash_exec!(
-                "rsync -a {}/ {}/",
-                config.volumes_path,
-                work_path
-            );
+        bash_exec!("rsync -a {}/ {}/", config.volumes_path, work_path);
 
         Ok(())
     }).finally(|| {
@@ -104,18 +96,28 @@ fn create_docker_volumes_archive(work_path: &str) -> Result {
 
 pub fn create_archive_command() -> Result {
 
+    let app_config = app_config();
+
     let options = create_command_options()?;
 
     let func = match options.archive_type {
         ArchiveType::DockerVolumes => create_docker_volumes_archive
     };
 
-    create_archive(
-        &options.prefix,
-        options.file_path,
-        options.no_encryption,
-        func
-    )?;
+    let custom_archive_config = match options.archive_type {
+        ArchiveType::DockerVolumes => app_config.docker_config.clone()
+            .map(|x| x.custom_archive_config)
+            .flatten()
+    };
+
+    let archive_options = ArchiveOptions {
+        prefix: options.prefix.clone(),
+        no_encryption: options.no_encryption,
+        file_path: options.file_path,
+        archive_config: custom_archive_config.as_config()
+    };
+
+    create_archive(archive_options, func)?;
 
     clear_cache(Some(&options.prefix))?;
 
