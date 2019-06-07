@@ -6,6 +6,7 @@ pub mod custom_sentry_client;
 pub mod error_handler;
 pub mod logging;
 pub mod prelude;
+
 #[macro_use]
 pub mod bash_shell;
 pub mod do_try;
@@ -21,6 +22,7 @@ use self::logging::*;
 use self::cli::CliRunner;
 
 use chrono::{DateTime, Utc};
+use lazy_static::lazy_static;
 
 static APP_CONFIG_FILE_NAME: &str = "app-config.json";
 static LOG_FILE_NAME: &str = "log/log.txt";

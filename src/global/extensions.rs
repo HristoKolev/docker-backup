@@ -151,7 +151,6 @@ impl<T> OptionFlatten<T> for Option<Option<Option<Option<T>>>> {
     }
 }
 
-
 impl<T> OptionFlatten<T> for Option<Option<Option<Option<Option<T>>>>> {
     fn flatten(self) -> Option<T> {
         match self {
@@ -161,3 +160,16 @@ impl<T> OptionFlatten<T> for Option<Option<Option<Option<Option<T>>>>> {
     }
 }
 
+pub trait OptionBorrow<T> {
+    fn map<U, F: FnOnce(&T) -> U>(&self, f: F) -> Option<U>;
+}
+
+impl<T> OptionBorrow<T> for Option<T> {
+
+    fn map<U, F: FnOnce(&T) -> U>(&self, f: F) -> Option<U> {
+        match self {
+            Some(x) => Some(f(x)),
+            None => None,
+        }
+    }
+}

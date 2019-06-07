@@ -1,14 +1,15 @@
 use std::path::{Path, PathBuf};
 
 use uuid::Uuid;
-use chrono::Utc;
+use chrono::{Utc, DateTime};
 use chrono::offset::TimeZone;
+use time::Duration;
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
 
 use crate::global::{do_try};
 use crate::global::prelude::*;
-use sentry::internals::DateTime;
 use crate::app_config::{ArchiveConfig, CustomArchiveConfig};
-use time::Duration;
 
 static ARCHIVE_EXTENSION: &str = "backup";
 
@@ -88,7 +89,6 @@ pub fn create_archive<F>(options: ArchiveOptions, func: F) -> Result
 
 pub fn get_daily_archive_path(options: &ArchiveOptions) -> Result<String> {
 
-
     let now = app_start_time();
 
     let daily_folder = Path::new(&options.archive_config.cache_path)
@@ -97,7 +97,7 @@ pub fn get_daily_archive_path(options: &ArchiveOptions) -> Result<String> {
 
     let archive_file_name = format!(
         "{}.{}.{}.{}",
-        prefix,
+        options.prefix,
         now.format("%Y-%m-%d").to_string(),
         now.timestamp().to_string(),
         ARCHIVE_EXTENSION
@@ -114,11 +114,41 @@ pub fn list_archives(prefix_option: Option<&str>) -> Result<Vec<ArchiveMetadata>
 
     let mut archives = Vec::new();
 
-    let daily_folders = ::std::fs::read_dir(&app_config.archive_config.cache_path)?;
+    let daily_folders = match prefix_option {
+        Some(prefix) => {
+
+            let archive_type = parse_archive_type(prefix)?;
+
+            let custom_config = get_custom_config(archive_type);
+
+            let mut dirs = Vec::new();
+
+            for item in ::std::fs::read_dir(&custom_config.cache_path)? {
+                dirs.push(item?);
+            }
+
+            dirs
+        },
+        None => {
+
+            let mut dirs = Vec::new();
+
+            for archive_type in ArchiveType::iter() {
+
+                let custom_config = get_custom_config(archive_type);
+
+                for item in ::std::fs::read_dir(&custom_config.cache_path)? {
+                    dirs.push(item?);
+                }
+            }
+
+            dirs
+        }
+    };
 
     for daily_folder_result in daily_folders {
 
-        let daily_folder = daily_folder_result?.path();
+        let daily_folder = daily_folder_result.path();
 
         for archive_file_result in ::std::fs::read_dir(daily_folder)? {
 
@@ -188,15 +218,15 @@ pub struct ArchiveMetadata {
     pub full_path: PathBuf,
 }
 
-#[derive(Debug)]
+#[derive(Debug, EnumIter)]
 pub enum ArchiveType {
     DockerVolumes
 }
 
-pub fn parse_archive_type(archive_type_string: &str) -> Result<ArchiveType> {
-    match archive_type_string {
+pub fn parse_archive_type(prefix: &str) -> Result<ArchiveType> {
+    match prefix {
         "docker-volumes" => Ok(ArchiveType::DockerVolumes),
-        _ => Err(CustomError::user_error(&format!("Archive type not found: {}", archive_type_string)))
+        _ => Err(CustomError::user_error(&format!("Archive type not found: {}", prefix)))
     }
 }
 
@@ -208,7 +238,9 @@ pub fn clear_cache(prefix: Option<&str>) -> Result {
 
     for item in list {
 
-        let expiration_time = *app_start_time() - Duration::days(app_config.archive_config.cache_expiry_days);
+        let custom_config = get_custom_config(item.archive_type);
+
+        let expiration_time = *app_start_time() - Duration::days(custom_config.cache_expiry_days);
 
         if item.archive_date < expiration_time {
 
@@ -221,40 +253,53 @@ pub fn clear_cache(prefix: Option<&str>) -> Result {
     Ok(())
 }
 
+pub fn get_custom_config(archive_type: ArchiveType) -> ArchiveConfig {
+
+    let app_config = app_config();
+
+    let archive_config = match archive_type {
+        ArchiveType::DockerVolumes => app_config.docker_config.clone()
+            .map(|x| x.custom_archive_config)
+            .flatten()
+    };
+
+    archive_config.as_config()
+}
+
 pub trait ArchiveConfigExtensions {
 
     fn as_config(&self) -> ArchiveConfig;
 }
 
 impl ArchiveConfigExtensions for CustomArchiveConfig {
+
     fn as_config(&self) -> ArchiveConfig {
 
-        let app_config = app_config();
+        let archive_config = &app_config().archive_config;
 
         ArchiveConfig {
-            temp_path: self.temp_path.unwrap_or_else(|| app_config.archive_config.temp_path),
-            cache_path: self.cache_path.unwrap_or_else(|| app_config.archive_config.cache_path),
-            archive_password: self.archive_password.unwrap_or_else(|| app_config.archive_config.archive_password),
-            cache_expiry_days: self.cache_expiry_days.unwrap_or_else(|| app_config.archive_config.cache_expiry_days),
+            temp_path: self.temp_path.clone().unwrap_or_else(|| archive_config.temp_path.clone()),
+            cache_path: self.cache_path.clone().unwrap_or_else(|| archive_config.cache_path.clone()),
+            archive_password: self.archive_password.clone().unwrap_or_else(|| archive_config.archive_password.clone()),
+            cache_expiry_days: self.cache_expiry_days.clone().unwrap_or_else(|| archive_config.cache_expiry_days.clone()),
         }
     }
 }
 
-
 impl ArchiveConfigExtensions for Option<CustomArchiveConfig> {
     fn as_config(&self) -> ArchiveConfig {
 
-        let app_config = app_config();
+        let archive_config = &app_config().archive_config;
 
         ArchiveConfig {
-            temp_path: self.map(|x| x.temp_path).flatten()
-                .unwrap_or_else(|| app_config.archive_config.temp_path),
-            cache_path: self.map(|x| x.cache_path).flatten()
-                .unwrap_or_else(|| app_config.archive_config.cache_path),
-            archive_password: self.map(|x| x.archive_password).flatten()
-                .unwrap_or_else(|| app_config.archive_config.archive_password),
-            cache_expiry_days: self.map(|x| x.cache_expiry_days).flatten()
-                .unwrap_or_else(|| app_config.archive_config.cache_expiry_days),
+            temp_path: self.map(|x| x.temp_path.clone()).flatten()
+                .unwrap_or_else(|| archive_config.temp_path.clone()),
+            cache_path: self.map(|x| x.cache_path.clone()).flatten()
+                .unwrap_or_else(|| archive_config.cache_path.clone()),
+            archive_password: self.map(|x| x.archive_password.clone()).flatten()
+                .unwrap_or_else(|| archive_config.archive_password.clone()),
+            cache_expiry_days: self.map(|x| x.cache_expiry_days.clone()).flatten()
+                .unwrap_or_else(|| archive_config.cache_expiry_days.clone()),
         }
     }
 }
