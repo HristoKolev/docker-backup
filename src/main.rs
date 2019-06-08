@@ -21,6 +21,16 @@ fn main() {
 
 fn main_result() -> Result {
 
+    // cli_program()?;
+
+    bash_exec!("echo 123");
+
+    Ok(())
+}
+
+
+fn cli_program() -> Result {
+
     cli().register_command("create", create_archive_command)?;
     cli().register_command("list", list_archive_command)?;
     cli().register_command("clear-cache", clear_cache_command)?;
