@@ -162,11 +162,19 @@ impl<T> OptionFlatten<T> for Option<Option<Option<Option<Option<T>>>>> {
 
 pub trait OptionBorrow<T> {
     fn map<U, F: FnOnce(&T) -> U>(&self, f: F) -> Option<U>;
+    fn map_result<U, F: FnOnce(&T) -> Result<U>>(&self, f: F) -> Option<Result<U>>;
 }
 
 impl<T> OptionBorrow<T> for Option<T> {
 
     fn map<U, F: FnOnce(&T) -> U>(&self, f: F) -> Option<U> {
+        match self {
+            Some(x) => Some(f(x)),
+            None => None,
+        }
+    }
+
+    fn map_result<U, F: FnOnce(&T) -> Result<U>>(&self, f: F) -> Option<Result<U>> {
         match self {
             Some(x) => Some(f(x)),
             None => None,

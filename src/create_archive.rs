@@ -1,8 +1,8 @@
 use clap::Arg;
 
-use crate::global::{do_try, app_config};
 use crate::global::prelude::*;
-use crate::archive_helper::{ArchiveType, parse_archive_type, create_archive, clear_cache, ArchiveOptions, get_custom_config};
+use crate::archive_helper::{create_archive, clear_cache, ArchiveOptions};
+use crate::archive_type::*;
 
 struct CreateCommandOptions {
     archive_type: ArchiveType,
@@ -66,41 +66,13 @@ fn create_command_options() -> Result<CreateCommandOptions> {
     })
 }
 
-fn create_docker_volumes_archive(work_path: &str) -> Result {
-
-    let config = app_config().docker_config.clone()
-        .ok_or_else(|| CustomError::from_message("DockerVolumes archiving is not configured."))?;
-
-    let ps_result = bash_exec!("echo `docker ps -a -q`");
-
-    do_try::run(|| {
-
-        bash_exec!("rsync -a {}/ {}/", config.volumes_path, work_path);
-
-        bash_exec!("docker pause {}", ps_result.stdout);
-
-        bash_exec!("rsync -a {}/ {}/", config.volumes_path, work_path);
-
-        Ok(())
-    }).finally(|| {
-
-        bash_exec!("docker unpause {}", ps_result.stdout);
-
-        Ok(())
-    })?;
-
-    Ok(())
-}
-
 pub fn create_archive_command() -> Result {
 
     let options = create_command_options()?;
 
-    let func = match options.archive_type {
-        ArchiveType::DockerVolumes => create_docker_volumes_archive
-    };
+    let func = get_create_archive(&options.archive_type);
 
-    let archive_config = get_custom_config(options.archive_type);
+    let archive_config = get_archive_config(options.archive_type);
 
     let archive_options = ArchiveOptions {
         prefix: options.prefix.clone(),

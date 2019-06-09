@@ -3,6 +3,9 @@
 #[macro_use]
 mod global;
 mod archive_helper;
+mod archive_type;
+mod archive_config_extensions;
+mod docker_volumes;
 mod create_archive;
 mod list_archives;
 mod clear_cache;
@@ -20,16 +23,6 @@ fn main() {
 }
 
 fn main_result() -> Result {
-
-    // cli_program()?;
-
-    bash_exec!("echo 123");
-
-    Ok(())
-}
-
-
-fn cli_program() -> Result {
 
     cli().register_command("create", create_archive_command)?;
     cli().register_command("list", list_archive_command)?;

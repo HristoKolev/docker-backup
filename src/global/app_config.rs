@@ -13,6 +13,20 @@ pub struct EmailConfig {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct RemoteConfig {
+    pub remote_name: String,
+    pub remote_path: String,
+    pub cache_expiry_days: i64,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct CustomRemoteConfig {
+    pub remote_name: Option<String>,
+    pub remote_path: Option<String>,
+    pub cache_expiry_days: Option<i64>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ArchiveConfig {
     pub cache_path: String,
     pub temp_path: String,
@@ -32,6 +46,7 @@ pub struct CustomArchiveConfig {
 pub struct DockerConfig {
     pub volumes_path: String,
     pub custom_archive_config: Option<CustomArchiveConfig>,
+    pub custom_remote_config: Option<Vec<CustomRemoteConfig>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -41,6 +56,7 @@ pub struct AppConfig {
     pub email_config: EmailConfig,
     pub archive_config: ArchiveConfig,
     pub docker_config: Option<DockerConfig>,
+    pub remote_config: Option<Vec<RemoteConfig>>,
 }
 
 pub fn read_config(file_path: &str) -> Result<AppConfig> {

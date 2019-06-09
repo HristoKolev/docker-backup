@@ -1,7 +1,8 @@
 use clap::Arg;
 
 use crate::global::prelude::*;
-use crate::archive_helper::{ArchiveType, parse_archive_type, clear_cache};
+use crate::archive_helper::{clear_cache};
+use crate::archive_type::*;
 
 struct ClearCacheCommandOptions {
     #[allow(unused)]
