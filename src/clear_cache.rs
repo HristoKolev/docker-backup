@@ -1,7 +1,7 @@
 use clap::Arg;
 
 use crate::global::prelude::*;
-use crate::archive_helper::{clear_cache};
+use crate::archive_helper::{clear_local_cache};
 use crate::archive_type::*;
 
 struct ClearCacheCommandOptions {
@@ -43,7 +43,7 @@ pub fn clear_cache_command() -> Result {
 
     let options = clear_cache_command_options()?;
 
-    clear_cache(options.prefix.as_ref().map(String::as_ref))?;
+    clear_local_cache(options.prefix.as_ref().map(String::as_ref))?;
 
     Ok(())
 }

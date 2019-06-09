@@ -2,7 +2,6 @@ use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
 use crate::global::prelude::*;
-use crate::archive_config_extensions::*;
 use crate::docker_volumes::create_docker_volumes_archive;
 
 #[derive(Debug, EnumIter)]
@@ -23,11 +22,30 @@ pub fn get_archive_config(archive_type: ArchiveType) -> ArchiveConfig {
 
     let archive_config = match archive_type {
         ArchiveType::DockerVolumes => app_config.docker_config.clone()
-            .map(|x| x.custom_archive_config)
+            .map(|x| x.archive_config)
             .flatten()
     };
 
-    archive_config.as_config()
+    archive_config.unwrap_or(app_config.archive_config.clone())
+}
+
+pub fn get_remote_config(archive_type: ArchiveType) -> Vec<RemoteConfig> {
+
+    let app_config = app_config();
+
+    let custom_config = match archive_type {
+        ArchiveType::DockerVolumes => app_config.docker_config.clone()
+            .map(|x| x.remote_config)
+            .flatten()
+    };
+
+    match custom_config {
+        Some(x) => x,
+        None => match app_config.remote_config.clone() {
+            Some(x) => x,
+            None => Vec::new()
+        }
+    }
 }
 
 impl ArchiveType {
@@ -39,9 +57,7 @@ impl ArchiveType {
 
 pub fn get_create_archive(archive_type: &ArchiveType) -> impl FnOnce(&str) -> Result {
 
-    let s = match archive_type {
+    match archive_type {
         ArchiveType::DockerVolumes => create_docker_volumes_archive
-    };
-
-    s
+    }
 }

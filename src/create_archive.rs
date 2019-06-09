@@ -1,7 +1,7 @@
 use clap::Arg;
 
 use crate::global::prelude::*;
-use crate::archive_helper::{create_archive, clear_cache, ArchiveOptions};
+use crate::archive_helper::{create_archive, clear_local_cache, ArchiveOptions};
 use crate::archive_type::*;
 
 struct CreateCommandOptions {
@@ -83,7 +83,7 @@ pub fn create_archive_command() -> Result {
 
     create_archive(archive_options, func)?;
 
-    clear_cache(Some(&options.prefix))?;
+    clear_local_cache(Some(&options.prefix))?;
 
     email_report::send_success_report(&options.prefix)?;
 

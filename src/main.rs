@@ -4,7 +4,6 @@
 mod global;
 mod archive_helper;
 mod archive_type;
-mod archive_config_extensions;
 mod docker_volumes;
 mod create_archive;
 mod list_archives;

@@ -1,7 +1,7 @@
 use clap::Arg;
 
 use crate::global::prelude::*;
-use crate::archive_helper::{list_archives};
+use crate::archive_helper::{list_local_cache_archives};
 use crate::archive_type::*;
 
 struct ListCommandOptions {
@@ -43,7 +43,7 @@ pub fn list_archive_command() -> Result {
 
     let options = list_command_options()?;
 
-    let list = list_archives(options.prefix.as_ref().map(String::as_ref))?;
+    let list = list_local_cache_archives(options.prefix.as_ref().map(String::as_ref))?;
 
     for item in list {
         log!(

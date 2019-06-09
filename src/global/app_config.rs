@@ -4,7 +4,6 @@ use super::prelude::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct EmailConfig {
-    pub email_enabled: bool,
     pub notification_emails: Vec<String>,
     pub smtp_username: String,
     pub smtp_password: String,
@@ -20,13 +19,6 @@ pub struct RemoteConfig {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct CustomRemoteConfig {
-    pub remote_name: Option<String>,
-    pub remote_path: Option<String>,
-    pub cache_expiry_days: Option<i64>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ArchiveConfig {
     pub cache_path: String,
     pub temp_path: String,
@@ -35,18 +27,10 @@ pub struct ArchiveConfig {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct CustomArchiveConfig {
-    pub cache_path: Option<String>,
-    pub temp_path: Option<String>,
-    pub archive_password: Option<String>,
-    pub cache_expiry_days: Option<i64>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DockerConfig {
     pub volumes_path: String,
-    pub custom_archive_config: Option<CustomArchiveConfig>,
-    pub custom_remote_config: Option<Vec<CustomRemoteConfig>>,
+    pub archive_config: Option<ArchiveConfig>,
+    pub remote_config: Option<Vec<RemoteConfig>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

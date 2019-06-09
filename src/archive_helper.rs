@@ -26,6 +26,42 @@ pub struct ArchiveMetadata {
     pub full_path: PathBuf,
 }
 
+pub fn read_metadata(path: &Path) -> Result<Option<ArchiveMetadata>> {
+
+    let archive_file_path_string = path.file_name_as_string()?;
+    let parts: Vec<&str> = archive_file_path_string.split(".").collect::<Vec<&str>>();
+
+    if parts.len() != 4 {
+        return Ok(None);
+    }
+
+    let prefix = parts[0];
+    let timestamp = parts[2];
+    let extension = parts[3];
+
+    if extension != ARCHIVE_FILE_EXTENSION {
+        return Ok(None);
+    }
+
+    Ok(match timestamp.parse::<i64>() {
+        Ok(epoch) => {
+
+            let archive_type = match parse_archive_type(prefix) {
+                Ok(x) => x,
+                Err(_) => return Ok(None)
+            };
+
+            Some(ArchiveMetadata {
+                full_path: path.to_path_buf(),
+                archive_date: Utc.timestamp(epoch, 0),
+                prefix: prefix.to_string(),
+                archive_type
+            })
+        },
+        Err(_) => None
+    })
+}
+
 pub fn create_archive<F>(options: ArchiveOptions, func: F) -> Result
     where F: FnOnce(&str) -> Result {
 
@@ -93,7 +129,7 @@ pub fn create_archive<F>(options: ArchiveOptions, func: F) -> Result
     Ok(())
 }
 
-pub fn get_daily_archive_path(options: &ArchiveOptions) -> Result<String> {
+fn get_daily_archive_path(options: &ArchiveOptions) -> Result<String> {
 
     let now = app_start_time();
 
@@ -116,7 +152,7 @@ pub fn get_daily_archive_path(options: &ArchiveOptions) -> Result<String> {
     Ok(archive_file_path)
 }
 
-pub fn list_archives(prefix_option: Option<&str>) -> Result<Vec<ArchiveMetadata>> {
+pub fn list_local_cache_archives(prefix_option: Option<&str>) -> Result<Vec<ArchiveMetadata>> {
 
     let mut archives = Vec::new();
 
@@ -180,47 +216,11 @@ pub fn list_archives(prefix_option: Option<&str>) -> Result<Vec<ArchiveMetadata>
     Ok(archives)
 }
 
-pub fn read_metadata(path: &Path) -> Result<Option<ArchiveMetadata>> {
-
-    let archive_file_path_string = path.file_name_as_string()?;
-    let parts: Vec<&str> = archive_file_path_string.split(".").collect::<Vec<&str>>();
-
-    if parts.len() != 4 {
-        return Ok(None);
-    }
-
-    let prefix = parts[0];
-    let timestamp = parts[2];
-    let extension = parts[3];
-
-    if extension != ARCHIVE_FILE_EXTENSION {
-        return Ok(None);
-    }
-
-    Ok(match timestamp.parse::<i64>() {
-        Ok(epoch) => {
-
-            let archive_type = match parse_archive_type(prefix) {
-                Ok(x) => x,
-                Err(_) => return Ok(None)
-            };
-
-            Some(ArchiveMetadata {
-                full_path: path.to_path_buf(),
-                archive_date: Utc.timestamp(epoch, 0),
-                prefix: prefix.to_string(),
-                archive_type
-            })
-        },
-        Err(_) => None
-    })
-}
-
-pub fn clear_cache(prefix: Option<&str>) -> Result {
+pub fn clear_local_cache(prefix: Option<&str>) -> Result {
 
     log!("Clearing local cache...");
 
-    let list = list_archives(prefix)?;
+    let list = list_local_cache_archives(prefix)?;
 
     for item in list {
 
