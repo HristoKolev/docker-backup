@@ -5,6 +5,7 @@ use super::email;
 use super::app_config;
 use super::prelude::*;
 use crate::global::logger;
+use crate::archive_type::ArchiveType;
 
 pub fn send_error_report(error: &CustomError) -> Result {
 
@@ -39,13 +40,13 @@ pub fn send_error_report(error: &CustomError) -> Result {
 }
 
 
-pub fn send_success_report(prefix: &str) -> Result {
+pub fn send_success_report(archive_type: &ArchiveType) -> Result {
 
     let app_config = app_config();
 
     let subject = format!(
         "[SUCCESS] xdxd-backup | An archive of type `{}` was created on `{}`.",
-        prefix,
+        archive_type.to_string(),
         app_config.hostname
     );
 

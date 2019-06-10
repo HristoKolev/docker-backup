@@ -1,12 +1,11 @@
 use clap::Arg;
 
 use crate::global::prelude::*;
-use crate::archive_helper::{create_archive, clear_local_cache, ArchiveOptions};
+use crate::archive_helper::{create_archive, clear_local_cache, ArchiveOptions, get_new_archive_path};
 use crate::archive_type::*;
 
 struct CreateCommandOptions {
     archive_type: ArchiveType,
-    prefix: String,
     file_path: Option<String>,
     no_encryption: bool,
 }
@@ -60,7 +59,6 @@ fn create_command_options() -> Result<CreateCommandOptions> {
 
     Ok(CreateCommandOptions {
         archive_type,
-        prefix: archive_type_string.to_string(),
         file_path: file_path.map(|x| x.to_string()),
         no_encryption,
     })
@@ -72,20 +70,22 @@ pub fn create_archive_command() -> Result {
 
     let func = get_create_archive(&options.archive_type);
 
-    let archive_config = get_archive_config(options.archive_type);
+    let file_path = match options.file_path {
+        Some(x) => x,
+        None => get_new_archive_path(&options.archive_type)?
+    };
 
     let archive_options = ArchiveOptions {
-        prefix: options.prefix.clone(),
         no_encryption: options.no_encryption,
-        file_path: options.file_path,
-        archive_config
+        file_path,
+        archive_type: options.archive_type.clone()
     };
 
     create_archive(archive_options, func)?;
 
-    clear_local_cache(Some(&options.prefix))?;
+    clear_local_cache(Some(&options.archive_type))?;
 
-    email_report::send_success_report(&options.prefix)?;
+    email_report::send_success_report(&options.archive_type)?;
 
     Ok(())
 }

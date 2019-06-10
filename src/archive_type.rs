@@ -4,19 +4,24 @@ use strum_macros::EnumIter;
 use crate::global::prelude::*;
 use crate::docker_volumes::create_docker_volumes_archive;
 
-#[derive(Debug, EnumIter)]
+#[derive(Clone, Debug, EnumIter, PartialEq)]
 pub enum ArchiveType {
     DockerVolumes
 }
 
 pub fn parse_archive_type(prefix: &str) -> Result<ArchiveType> {
-    match prefix {
-        "docker-volumes" => Ok(ArchiveType::DockerVolumes),
-        _ => Err(CustomError::user_error(&format!("Archive type not found: {}", prefix)))
+
+    for archive_type in ArchiveType::all() {
+
+        if &archive_type.to_string() == &prefix.to_lowercase() {
+            return Ok(archive_type);
+        }
     }
+
+    Err(CustomError::user_error(&format!("Archive type not found: {}", prefix)))
 }
 
-pub fn get_archive_config(archive_type: ArchiveType) -> ArchiveConfig {
+pub fn get_archive_config(archive_type: &ArchiveType) -> ArchiveConfig {
 
     let app_config = app_config();
 
@@ -29,7 +34,7 @@ pub fn get_archive_config(archive_type: ArchiveType) -> ArchiveConfig {
     archive_config.unwrap_or(app_config.archive_config.clone())
 }
 
-pub fn get_remote_config(archive_type: ArchiveType) -> Vec<RemoteConfig> {
+pub fn get_remote_config(archive_type: &ArchiveType) -> Vec<RemoteConfig> {
 
     let app_config = app_config();
 
@@ -52,6 +57,14 @@ impl ArchiveType {
 
     pub fn all() -> Vec<ArchiveType> {
         ArchiveType::iter().collect::<Vec<ArchiveType>>()
+    }
+}
+
+impl ToString for ArchiveType {
+    fn to_string(&self) -> String {
+        match self {
+            ArchiveType::DockerVolumes => "docker-volumes".to_string()
+        }
     }
 }
 

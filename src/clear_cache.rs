@@ -5,9 +5,7 @@ use crate::archive_helper::{clear_local_cache};
 use crate::archive_type::*;
 
 struct ClearCacheCommandOptions {
-    #[allow(unused)]
     archive_type: Option<ArchiveType>,
-    prefix: Option<String>,
 }
 
 fn clear_cache_command_options() -> Result<ClearCacheCommandOptions> {
@@ -34,7 +32,6 @@ fn clear_cache_command_options() -> Result<ClearCacheCommandOptions> {
     };
 
     Ok(ClearCacheCommandOptions {
-        prefix: archive_type_string.map(|x| x.to_string()),
         archive_type
     })
 }
@@ -43,7 +40,7 @@ pub fn clear_cache_command() -> Result {
 
     let options = clear_cache_command_options()?;
 
-    clear_local_cache(options.prefix.as_ref().map(String::as_ref))?;
+    clear_local_cache(options.archive_type.as_ref())?;
 
     Ok(())
 }

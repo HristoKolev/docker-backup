@@ -1,13 +1,11 @@
 use clap::Arg;
 
 use crate::global::prelude::*;
-use crate::archive_helper::{list_local_cache_archives};
+use crate::archive_helper::{list_local_archives};
 use crate::archive_type::*;
 
 struct ListCommandOptions {
-    #[allow(unused)]
     archive_type: Option<ArchiveType>,
-    prefix: Option<String>,
 }
 
 fn list_command_options() -> Result<ListCommandOptions> {
@@ -34,7 +32,6 @@ fn list_command_options() -> Result<ListCommandOptions> {
     };
 
     Ok(ListCommandOptions {
-        prefix: archive_type_string.map(|x| x.to_string()),
         archive_type
     })
 }
@@ -43,13 +40,13 @@ pub fn list_archive_command() -> Result {
 
     let options = list_command_options()?;
 
-    let list = list_local_cache_archives(options.prefix.as_ref().map(String::as_ref))?;
+    let list = list_local_archives(options.archive_type.as_ref())?;
 
     for item in list {
         log!(
             "{} | {} | {}",
             item.full_path.file_name_as_string()?,
-            item.prefix,
+            item.archive_type.to_string(),
             item.archive_date.format("%Y-%m-%d %H:%M:%S").to_string()
         );
     }

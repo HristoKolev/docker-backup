@@ -12,15 +12,13 @@ use crate::archive_type::*;
 static ARCHIVE_FILE_EXTENSION: &str = "backup";
 
 pub struct ArchiveOptions {
-    pub prefix: String,
-    pub file_path: Option<String>,
+    pub file_path: String,
     pub no_encryption: bool,
-    pub archive_config: ArchiveConfig,
+    pub archive_type: ArchiveType,
 }
 
 #[derive(Debug)]
 pub struct ArchiveMetadata {
-    pub prefix: String,
     pub archive_type: ArchiveType,
     pub archive_date: DateTime<Utc>,
     pub full_path: PathBuf,
@@ -54,7 +52,6 @@ pub fn read_metadata(path: &Path) -> Result<Option<ArchiveMetadata>> {
             Some(ArchiveMetadata {
                 full_path: path.to_path_buf(),
                 archive_date: Utc.timestamp(epoch, 0),
-                prefix: prefix.to_string(),
                 archive_type
             })
         },
@@ -65,7 +62,9 @@ pub fn read_metadata(path: &Path) -> Result<Option<ArchiveMetadata>> {
 pub fn create_archive<F>(options: ArchiveOptions, func: F) -> Result
     where F: FnOnce(&str) -> Result {
 
-    let work_path = Path::new(&options.archive_config.temp_path)
+    let archive_config = get_archive_config(&options.archive_type);
+
+    let work_path = Path::new(&archive_config.temp_path)
         .combine_with(&Uuid::new_v4().to_string());
 
     do_try::run(|| {
@@ -103,7 +102,7 @@ pub fn create_archive<F>(options: ArchiveOptions, func: F) -> Result
 
             bash_exec!(
                 r#"echo "{0}" | gpg --symmetric --batch --passphrase-fd 0 --cipher-algo AES256 --output {1} {2}"#,
-                &options.archive_config.archive_password,
+                &archive_config.archive_password,
                 &final_archive,
                 &compressed
             );
@@ -111,12 +110,7 @@ pub fn create_archive<F>(options: ArchiveOptions, func: F) -> Result
             bash_exec!("rm {0} -f", compressed);
         }
 
-        let archive_file_path = match options.file_path {
-            Some(x) => x,
-            None => get_daily_archive_path(&options)?
-        };
-
-        bash_exec!("mv {} {}", &final_archive, &archive_file_path);
+        bash_exec!("mv {} {}", &final_archive, &options.file_path);
 
         Ok(())
     }).finally(|| {
@@ -129,17 +123,19 @@ pub fn create_archive<F>(options: ArchiveOptions, func: F) -> Result
     Ok(())
 }
 
-fn get_daily_archive_path(options: &ArchiveOptions) -> Result<String> {
+pub fn get_new_archive_path(archive_type: &ArchiveType) -> Result<String> {
+
+    let archive_config = get_archive_config(archive_type);
 
     let now = app_start_time();
 
-    let daily_folder = Path::new(&options.archive_config.cache_path)
+    let daily_folder = Path::new(&archive_config.cache_path)
         .combine_with(&now.format("day_%Y_%m_%d").to_string())
         .create_directory()?;
 
     let archive_file_name = format!(
         "{}.{}.{}.{}",
-        options.prefix,
+        archive_type.to_string(),
         now.format("%Y-%m-%d").to_string(),
         now.timestamp().to_string(),
         ARCHIVE_FILE_EXTENSION
@@ -152,63 +148,46 @@ fn get_daily_archive_path(options: &ArchiveOptions) -> Result<String> {
     Ok(archive_file_path)
 }
 
-pub fn list_local_cache_archives(prefix_option: Option<&str>) -> Result<Vec<ArchiveMetadata>> {
+pub fn list_local_archives(archive_type: Option<&ArchiveType>) -> Result<Vec<ArchiveMetadata>> {
+
+    let archive_types = match archive_type {
+        Some(x) => vec![x.clone()],
+        None => ArchiveType::all(),
+    };
 
     let mut archives = Vec::new();
 
-    let daily_folders = match prefix_option {
-        Some(prefix) => {
+    for archive_type in archive_types {
 
-            let archive_type = parse_archive_type(prefix)?;
+        let custom_config = get_archive_config(&archive_type);
 
-            let custom_config = get_archive_config(archive_type);
+        let mut daily_folders = Vec::new();
 
-            let mut dirs = Vec::new();
+        if Path::new(&custom_config.cache_path).exists() {
 
             for item in ::std::fs::read_dir(&custom_config.cache_path)? {
-                dirs.push(item?);
+                daily_folders.push(item?);
             }
-
-            dirs
-        },
-        None => {
-
-            let mut dirs = Vec::new();
-
-            for archive_type in ArchiveType::all() {
-
-                let custom_config = get_archive_config(archive_type);
-
-                for item in ::std::fs::read_dir(&custom_config.cache_path)? {
-                    dirs.push(item?);
-                }
-            }
-
-            dirs
         }
-    };
 
-    for daily_folder_result in daily_folders {
+        for daily_folder_result in daily_folders {
 
-        let daily_folder = daily_folder_result.path();
+            let daily_folder = daily_folder_result.path();
 
-        for archive_file_result in ::std::fs::read_dir(daily_folder)? {
+            for archive_file_result in ::std::fs::read_dir(daily_folder)? {
 
-            let archive_path = archive_file_result?.path();
+                let archive_path = archive_file_result?.path();
 
-            let metadata = read_metadata(&archive_path)?;
+                let metadata = read_metadata(&archive_path)?;
 
-            match metadata {
-                Some(x) => {
-                    if let Some(prefix) = prefix_option {
-                        if &x.prefix == prefix {
-                            archives.push(x)
+                match metadata {
+                    Some(x) => {
+                        if x.archive_type == archive_type {
+                            archives.push(x);
                         }
-                    } else {
-                        archives.push(x)
-                    }
-                },
-                None => ()
+                    },
+                    None => ()
+                }
             }
         }
     }
@@ -216,15 +195,15 @@ pub fn list_local_cache_archives(prefix_option: Option<&str>) -> Result<Vec<Arch
     Ok(archives)
 }
 
-pub fn clear_local_cache(prefix: Option<&str>) -> Result {
+pub fn clear_local_cache(archive_type: Option<&ArchiveType>) -> Result {
 
     log!("Clearing local cache...");
 
-    let list = list_local_cache_archives(prefix)?;
+    let list = list_local_archives(archive_type)?;
 
     for item in list {
 
-        let archive_config = get_archive_config(item.archive_type);
+        let archive_config = get_archive_config(&item.archive_type);
 
         let expiration_time = *app_start_time() - Duration::days(archive_config.cache_expiry_days);
 

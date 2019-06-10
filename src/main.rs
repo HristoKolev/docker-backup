@@ -3,6 +3,7 @@
 #[macro_use]
 mod global;
 mod archive_helper;
+mod remote_helper;
 mod archive_type;
 mod docker_volumes;
 mod create_archive;
