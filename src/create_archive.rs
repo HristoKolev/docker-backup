@@ -3,6 +3,7 @@ use clap::Arg;
 use crate::global::prelude::*;
 use crate::archive_helper::{create_archive, clear_local_cache, ArchiveOptions, get_new_archive_path};
 use crate::archive_type::*;
+use crate::remote_helper::{upload_archive, clear_remote_cache};
 
 struct CreateCommandOptions {
     archive_type: ArchiveType,
@@ -68,20 +69,23 @@ pub fn create_archive_command() -> Result {
 
     let options = create_command_options()?;
 
-    let func = get_create_archive(&options.archive_type);
-
-    let file_path = match options.file_path {
-        Some(x) => x,
-        None => get_new_archive_path(&options.archive_type)?
-    };
-
     let archive_options = ArchiveOptions {
         no_encryption: options.no_encryption,
-        file_path,
+        file_path: options.file_path.clone().map(|x| Ok(x))
+            .unwrap_or_else(|| get_new_archive_path(&options.archive_type))?,
         archive_type: options.archive_type.clone()
     };
 
-    create_archive(archive_options, func)?;
+    let func = get_create_archive(&options.archive_type);
+
+    let metadata = create_archive(archive_options, func)?;
+
+    for remote_config in get_remote_config(&options.archive_type) {
+
+        upload_archive(&metadata, &remote_config)?;
+    }
+
+    clear_remote_cache(&options.archive_type)?;
 
     clear_local_cache(Some(&options.archive_type))?;
 

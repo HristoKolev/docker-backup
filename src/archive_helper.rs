@@ -59,7 +59,7 @@ pub fn read_metadata(path: &Path) -> Result<Option<ArchiveMetadata>> {
     })
 }
 
-pub fn create_archive<F>(options: ArchiveOptions, func: F) -> Result
+pub fn create_archive<F>(options: ArchiveOptions, func: F) -> Result<ArchiveMetadata>
     where F: FnOnce(&str) -> Result {
 
     let archive_config = get_archive_config(&options.archive_type);
@@ -112,15 +112,18 @@ pub fn create_archive<F>(options: ArchiveOptions, func: F) -> Result
 
         bash_exec!("mv {} {}", &final_archive, &options.file_path);
 
-        Ok(())
+
+        let metadata = read_metadata(Path::new(&options.file_path))?
+            .ok_or_else(|| CustomError::from_message("The archiver somehow did not produce a correct archive."))?;
+
+        Ok(metadata)
+
     }).finally(|| {
 
         bash_exec!( "rm {} -rf", work_path.get_as_string()?);
 
         Ok(())
-    })?;
-
-    Ok(())
+    })
 }
 
 pub fn get_new_archive_path(archive_type: &ArchiveType) -> Result<String> {
@@ -161,18 +164,15 @@ pub fn list_local_archives(archive_type: Option<&ArchiveType>) -> Result<Vec<Arc
 
         let custom_config = get_archive_config(&archive_type);
 
-        let mut daily_folders = Vec::new();
+        let cache_path = Path::new(&custom_config.cache_path);
 
-        if Path::new(&custom_config.cache_path).exists() {
-
-            for item in ::std::fs::read_dir(&custom_config.cache_path)? {
-                daily_folders.push(item?);
-            }
+        if !cache_path.exists() {
+            continue;
         }
 
-        for daily_folder_result in daily_folders {
+        for item in ::std::fs::read_dir(cache_path)? {
 
-            let daily_folder = daily_folder_result.path();
+            let daily_folder = item?.path();
 
             for archive_file_result in ::std::fs::read_dir(daily_folder)? {
 
@@ -201,17 +201,17 @@ pub fn clear_local_cache(archive_type: Option<&ArchiveType>) -> Result {
 
     let list = list_local_archives(archive_type)?;
 
-    for item in list {
+    for archive_metadata in list {
 
-        let archive_config = get_archive_config(&item.archive_type);
+        let archive_config = get_archive_config(&archive_metadata.archive_type);
 
         let expiration_time = *app_start_time() - Duration::days(archive_config.cache_expiry_days);
 
-        if item.archive_date < expiration_time {
+        if archive_metadata.archive_date < expiration_time {
 
-            log!("Deleting `{}` ...", item.full_path.get_as_string()?);
+            log!("Deleting `{}` ...", archive_metadata.full_path.get_as_string()?);
 
-            ::std::fs::remove_file(item.full_path)?;
+            ::std::fs::remove_file(archive_metadata.full_path)?;
         }
     }
 

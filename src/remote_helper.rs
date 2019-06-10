@@ -5,6 +5,7 @@ use serde::{Serialize, Deserialize};
 use crate::global::prelude::*;
 use crate::archive_helper::{ArchiveMetadata, read_metadata};
 use crate::archive_type::{ArchiveType, get_remote_config};
+use time::Duration;
 
 pub fn upload_archive(archive_metadata: &ArchiveMetadata, remote_config: &RemoteConfig) -> Result {
 
@@ -98,7 +99,6 @@ pub fn list_remote_archives(archive_type: Option<&ArchiveType>) ->  Result<Vec<R
         }
     }
 
-
     Ok(metadata)
 }
 
@@ -109,6 +109,29 @@ pub fn delete_remote_archive(remote_archive: &RemoteArchiveMetadata) -> Result {
         remote_archive.remote_config.remote_name,
         remote_archive.archive_metadata.full_path.get_as_string()?
     );
+
+    Ok(())
+}
+
+pub fn clear_remote_cache(archive_type: &ArchiveType) -> Result {
+
+    let archives = list_remote_archives(Some(archive_type))?;
+
+    for remote_archive_metadata in archives {
+
+        let expiration_time = *app_start_time() - Duration::days(remote_archive_metadata.remote_config.cache_expiry_days);
+
+        if remote_archive_metadata.archive_metadata.archive_date < expiration_time {
+
+            log!(
+                "Deleting remote file: `{}:{}` ...",
+                remote_archive_metadata.remote_config.remote_name,
+                remote_archive_metadata.archive_metadata.full_path.get_as_string()?
+            );
+
+            delete_remote_archive(&remote_archive_metadata)?;
+        }
+    }
 
     Ok(())
 }
