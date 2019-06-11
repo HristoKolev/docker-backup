@@ -1,7 +1,7 @@
 use clap::Arg;
 
 use crate::global::prelude::*;
-use crate::archive_helper::{create_archive, clear_local_cache, ArchiveOptions, get_new_archive_path};
+use crate::archive_helper::{create_archive, clear_local_cache, ArchiveOptions, get_new_archive_path, ArchiveMetadata};
 use crate::archive_type::*;
 use crate::remote_helper::{upload_archive, clear_remote_cache};
 
@@ -80,18 +80,37 @@ pub fn create_archive_command() -> Result {
 
     let metadata = create_archive(archive_options, func)?;
 
-    for remote_config in get_remote_config(&options.archive_type) {
+    process_remotes(&metadata)?;
 
-        upload_archive(&metadata, &remote_config)?;
-    }
-
-    clear_remote_cache(&options.archive_type)?;
-
-    clear_local_cache(Some(&options.archive_type))?;
+    clear_local_cache(Some(&metadata.archive_type))?;
 
     email_report::send_success_report(&options.archive_type)?;
 
     Ok(())
 }
 
+fn process_remotes(archive_metadata: &ArchiveMetadata) -> Result {
 
+    let remotes = get_remote_config(&archive_metadata.archive_type);
+
+    let results = remotes.into_iter()
+        .map(|x| process_remote(&archive_metadata, &x))
+        .collect::<Vec<Result>>();
+
+    for result in results {
+
+        result?;
+    }
+
+    Ok(())
+}
+
+
+fn process_remote(archive_metadata: &ArchiveMetadata, remote_config: &RemoteConfig) -> Result {
+
+    upload_archive(&archive_metadata, &remote_config)?;
+
+    clear_remote_cache(&archive_metadata.archive_type)?;
+
+    Ok(())
+}
