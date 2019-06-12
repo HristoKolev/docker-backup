@@ -16,6 +16,7 @@ pub struct RemoteConfig {
     pub remote_name: String,
     pub remote_path: String,
     pub cache_expiry_days: i64,
+    pub min_archive_count: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

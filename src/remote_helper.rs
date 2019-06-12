@@ -1,11 +1,12 @@
 use std::path::Path;
 
 use serde::{Serialize, Deserialize};
+use time::Duration;
 
 use crate::global::prelude::*;
 use crate::archive_helper::{ArchiveMetadata, read_metadata};
 use crate::archive_type::{ArchiveType, get_remote_config};
-use time::Duration;
+use std::collections::HashMap;
 
 pub fn upload_archive(archive_metadata: &ArchiveMetadata, remote_config: &RemoteConfig) -> Result {
 
@@ -117,11 +118,41 @@ pub fn clear_remote_cache(archive_type: &ArchiveType) -> Result {
 
     let archives = list_remote_archives(Some(archive_type))?;
 
-    for remote_archive_metadata in archives {
+    let mut expired: Vec<RemoteArchiveMetadata> = archives
+        .into_iter()
+        .filter(|x| x.archive_metadata.archive_date < (*app_start_time() - Duration::days(x.remote_config.cache_expiry_days)))
+        .collect();
 
-        let expiration_time = *app_start_time() - Duration::days(remote_archive_metadata.remote_config.cache_expiry_days);
+    expired.sort_by_key(|x| x.archive_metadata.archive_date);
 
-        if remote_archive_metadata.archive_metadata.archive_date < expiration_time {
+    let mut group_map = HashMap::new();
+
+    for archive in expired {
+
+        let value = group_map
+            .entry(archive.remote_config.remote_name.clone())
+            .or_insert(Vec::new());
+
+        value.push(archive);
+    }
+
+    for (key, archives) in group_map {
+
+        let remote_configs = get_remote_config(archive_type).into_iter()
+            .filter(|x|x.remote_name == key)
+            .collect::<Vec<RemoteConfig>>();
+
+        let remote_config = remote_configs.first()
+            .ok_or_else(|| CustomError::from_message(&format!("No remote found with this name. Name: {}", key)))?;
+
+        let take_count = if ((archives.len() as i32) - remote_config.min_archive_count) < 0 {0} else {((archives.len() as i32) - remote_config.min_archive_count)};
+
+        let for_delete: Vec<RemoteArchiveMetadata> = archives
+            .into_iter()
+            .take(take_count as usize)
+            .collect();
+
+        for remote_archive_metadata in for_delete {
 
             log!(
                 "Deleting remote file: `{}:{}` ...",
