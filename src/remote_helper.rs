@@ -47,7 +47,7 @@ pub struct RemoteFile {
     pub id: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RemoteArchiveMetadata {
     pub archive_metadata: ArchiveMetadata,
     pub remote_config: RemoteConfig,
@@ -118,32 +118,17 @@ pub fn clear_remote_cache(archive_type: &ArchiveType) -> Result {
 
     let archives = list_remote_archives(Some(archive_type))?;
 
-    let mut expired: Vec<RemoteArchiveMetadata> = archives
-        .into_iter()
+    let map: HashMap<String, Vec<_>> = archives.into_iter()
         .filter(|x| x.archive_metadata.archive_date < (*app_start_time() - Duration::days(x.remote_config.cache_expiry_days)))
+        .order_by(|x| x.archive_metadata.archive_date)
+        .group_by(|x| x.remote_config.remote_name.clone())
         .collect();
 
-    expired.sort_by_key(|x| x.archive_metadata.archive_date);
+    for (remote_name, archives) in map {
 
-    let mut group_map = HashMap::new();
-
-    for archive in expired {
-
-        let value = group_map
-            .entry(archive.remote_config.remote_name.clone())
-            .or_insert(Vec::new());
-
-        value.push(archive);
-    }
-
-    for (key, archives) in group_map {
-
-        let remote_configs = get_remote_config(archive_type).into_iter()
-            .filter(|x|x.remote_name == key)
-            .collect::<Vec<RemoteConfig>>();
-
-        let remote_config = remote_configs.first()
-            .ok_or_else(|| CustomError::from_message(&format!("No remote found with this name. Name: {}", key)))?;
+        let remote_config = get_remote_config(archive_type)
+            .into_iter().first(|x|x.remote_name == remote_name)
+            .ok_or_else(|| CustomError::from_message(&format!("No remote found with this name. Name: {}", remote_name)))?;
 
         let take_count = if ((archives.len() as i32) - remote_config.min_archive_count) < 0 {0} else {((archives.len() as i32) - remote_config.min_archive_count)};
 

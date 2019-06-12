@@ -24,12 +24,8 @@ fn list_command_options() -> Result<ListCommandOptions> {
         )
     });
 
-    let archive_type_string = matches.value_of(ARCHIVE_TYPE_VALUE);
-
-    let archive_type = match archive_type_string {
-        Some(xx) => Some(parse_archive_type(xx)?),
-        None => None
-    };
+    let archive_type = matches.value_of(ARCHIVE_TYPE_VALUE)
+        .map_result(|x| parse_archive_type(x))?;
 
     Ok(ListCommandOptions {
         archive_type

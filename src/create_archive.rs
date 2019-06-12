@@ -43,9 +43,6 @@ fn create_command_options() -> Result<CreateCommandOptions> {
         )
     });
 
-    let archive_type_string = matches.value_of(ARCHIVE_TYPE_VALUE)
-        .ok_or_else(|| CustomError::from_message(&format!("No value for: {}", ARCHIVE_TYPE_VALUE)))?;
-
     let file_path = matches.value_of(FILE_VALUE);
 
     if let Some(file_path) = file_path {
@@ -53,6 +50,9 @@ fn create_command_options() -> Result<CreateCommandOptions> {
             return Err(CustomError::user_error(&format!("File `{}` already exists", file_path)));
         }
     }
+
+    let archive_type_string = matches.value_of(ARCHIVE_TYPE_VALUE)
+        .ok_or_else(|| CustomError::from_message(&format!("No value for: {}", ARCHIVE_TYPE_VALUE)))?;
 
     let archive_type = parse_archive_type(archive_type_string)?;
 
@@ -93,9 +93,9 @@ fn process_remotes(archive_metadata: &ArchiveMetadata) -> Result {
 
     let remotes = get_remote_config(&archive_metadata.archive_type);
 
-    let results = remotes.into_iter()
+    let results: Vec<Result> = remotes.into_iter()
         .map(|x| process_remote(&archive_metadata, &x))
-        .collect::<Vec<Result>>();
+        .collect();
 
     for result in results {
 

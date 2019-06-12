@@ -27,14 +27,14 @@ impl CliRunner {
         matches = f(matches);
 
         let mut i = 0;
-        let args = ::std::env::args_os().filter(|_| {
+        let args: Vec<OsString> = ::std::env::args_os().filter(|_| {
 
             let result = i != 1;
 
             i += 1;
 
             result
-        }).collect::<Vec<OsString>>();
+        }).collect();
 
         matches.get_matches_from(args)
     }
@@ -57,9 +57,9 @@ impl CliRunner {
 
         let command_map = self.command_map.lock()?;
 
-        let mut available_commands = command_map.iter()
+        let mut available_commands: Vec<String> = command_map.iter()
             .map(|(key, _val)| key.to_string())
-            .collect::<Vec<String>>();
+            .collect();
 
         available_commands.sort_by(|a,b| a.cmp(b));
 

@@ -17,7 +17,7 @@ pub struct ArchiveOptions {
     pub archive_type: ArchiveType,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ArchiveMetadata {
     pub archive_type: ArchiveType,
     pub archive_date: DateTime<Utc>,
@@ -27,7 +27,7 @@ pub struct ArchiveMetadata {
 pub fn read_metadata(path: &Path) -> Result<Option<ArchiveMetadata>> {
 
     let archive_file_path_string = path.file_name_as_string()?;
-    let parts: Vec<&str> = archive_file_path_string.split(".").collect::<Vec<&str>>();
+    let parts: Vec<&str> = archive_file_path_string.split(".").collect();
 
     if parts.len() != 4 {
         return Ok(None);

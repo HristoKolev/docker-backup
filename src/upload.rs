@@ -1,14 +1,13 @@
 use clap::Arg;
 
 use crate::global::prelude::*;
-use crate::archive_helper::{clear_local_cache};
 use crate::archive_type::*;
 
-struct ClearCacheCommandOptions {
+struct UploadCommandOptions {
     archive_type: Option<ArchiveType>,
 }
 
-fn clear_cache_command_options() -> Result<ClearCacheCommandOptions> {
+fn upload_command_options() -> Result<UploadCommandOptions> {
 
     const ARCHIVE_TYPE_VALUE: &str = "archive-type";
 
@@ -18,7 +17,7 @@ fn clear_cache_command_options() -> Result<ClearCacheCommandOptions> {
             .short("t")
             .long(ARCHIVE_TYPE_VALUE)
             .value_name(ARCHIVE_TYPE_VALUE)
-            .help("The type of archive you want to clear the cache of.")
+            .help("The type of archive you want upload.")
             .required(false)
             .takes_value(true)
         )
@@ -27,16 +26,14 @@ fn clear_cache_command_options() -> Result<ClearCacheCommandOptions> {
     let archive_type = matches.value_of(ARCHIVE_TYPE_VALUE)
         .map_result(|x| parse_archive_type(x))?;
 
-    Ok(ClearCacheCommandOptions {
+    Ok(UploadCommandOptions {
         archive_type
     })
 }
 
-pub fn clear_cache_command() -> Result {
+pub fn upload_command() -> Result {
 
-    let options = clear_cache_command_options()?;
-
-    clear_local_cache(options.archive_type.as_ref())?;
+    let options = upload_command_options()?;
 
     Ok(())
 }
