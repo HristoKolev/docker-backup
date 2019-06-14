@@ -23,7 +23,7 @@ pub struct RemoteConfig {
 pub struct ArchiveConfig {
     pub cache_path: String,
     pub temp_path: String,
-    pub archive_password: String,
+    pub gpg_key_name: String,
     pub cache_expiry_days: i64,
 }
 

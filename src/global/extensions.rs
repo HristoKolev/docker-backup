@@ -228,17 +228,17 @@ pub trait IteratorExtensions: Iterator {
         vec.first().map(|x| x.clone())
     }
 
-    fn any<F>(self, f: F) -> bool
-        where Self: Sized, F: Fn(&Self::Item) -> bool {
+    fn any_result<F>(self, f: F) -> Result<bool>
+        where Self: Sized, F: Fn(&Self::Item) -> Result<bool> {
 
         for item in self {
 
-            if f(&item) {
-                return true;
+            if f(&item)? {
+                return Ok(true);
             }
         }
 
-        false
+        Ok(false)
     }
 }
 

@@ -101,8 +101,8 @@ pub fn create_archive<F>(options: ArchiveOptions, func: F) -> Result<ArchiveMeta
         } else {
 
             bash_exec!(
-                r#"echo "{0}" | gpg --symmetric --batch --passphrase-fd 0 --cipher-algo AES256 --output {1} {2}"#,
-                &archive_config.archive_password,
+                "gpg -e --batch -r {0} --output {1} {2}",
+                &archive_config.gpg_key_name,
                 &final_archive,
                 &compressed
             );
@@ -111,7 +111,6 @@ pub fn create_archive<F>(options: ArchiveOptions, func: F) -> Result<ArchiveMeta
         }
 
         bash_exec!("mv {} {}", &final_archive, &options.file_path);
-
 
         let metadata = read_metadata(Path::new(&options.file_path))?
             .ok_or_else(|| CustomError::from_message("The archiver somehow did not produce a correct archive."))?;

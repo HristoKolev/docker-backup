@@ -4,7 +4,7 @@ use strum_macros::EnumIter;
 use crate::global::prelude::*;
 use crate::docker_volumes::create_docker_volumes_archive;
 
-#[derive(Clone, Debug, EnumIter, PartialEq)]
+#[derive(Clone, Debug, EnumIter, PartialEq, Eq, Hash)]
 pub enum ArchiveType {
     DockerVolumes
 }

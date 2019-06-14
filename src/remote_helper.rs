@@ -116,6 +116,8 @@ pub fn delete_remote_archive(remote_archive: &RemoteArchiveMetadata) -> Result {
 
 pub fn clear_remote_cache(archive_type: &ArchiveType) -> Result {
 
+    log!("Clearing remote cache...");
+
     let archives = list_remote_archives(Some(archive_type))?;
 
     let map: HashMap<String, Vec<_>> = archives.into_iter()
