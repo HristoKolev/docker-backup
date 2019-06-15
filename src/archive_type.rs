@@ -2,7 +2,7 @@ use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
 use crate::global::prelude::*;
-use crate::docker_volumes::create_docker_volumes_archive;
+use crate::docker_volumes::{create_docker_volumes_archive, restore_docker_volumes_archive};
 
 #[derive(Clone, Debug, EnumIter, PartialEq, Eq, Hash)]
 pub enum ArchiveType {
@@ -72,5 +72,12 @@ pub fn get_create_archive(archive_type: &ArchiveType) -> impl FnOnce(&str) -> Re
 
     match archive_type {
         ArchiveType::DockerVolumes => create_docker_volumes_archive
+    }
+}
+
+pub fn get_restore_archive(archive_type: &ArchiveType) -> impl FnOnce(&str, &str) -> Result {
+
+    match archive_type {
+        ArchiveType::DockerVolumes => restore_docker_volumes_archive
     }
 }

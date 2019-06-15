@@ -1,9 +1,10 @@
 use clap::Arg;
 
 use crate::global::prelude::*;
-use crate::archive_helper::{create_archive, clear_local_cache, ArchiveOptions, get_new_archive_path, ArchiveMetadata};
+use crate::archive_helper::{create_archive, clear_local_cache, CreateArchiveOptions, get_new_archive_path, ArchiveMetadata};
 use crate::archive_type::*;
 use crate::remote_helper::{upload_archive, clear_remote_cache};
+use std::path::Path;
 
 struct CreateCommandOptions {
     archive_type: ArchiveType,
@@ -69,9 +70,9 @@ pub fn create_archive_command() -> Result {
 
     let options = create_command_options()?;
 
-    let archive_options = ArchiveOptions {
+    let archive_options = CreateArchiveOptions {
         no_encryption: options.no_encryption,
-        file_path: options.file_path.clone().map(|x| Ok(x))
+        file_path: options.file_path.clone().map(|x| Ok(Path::new(&x).to_path_buf()))
             .unwrap_or_else(|| get_new_archive_path(&options.archive_type))?,
         archive_type: options.archive_type.clone()
     };

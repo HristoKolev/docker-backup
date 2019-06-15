@@ -14,15 +14,16 @@ pub mod email;
 pub mod email_report;
 pub mod cli;
 
+use std::path::PathBuf;
+use chrono::{DateTime, Utc};
+use lazy_static::lazy_static;
+
 use self::prelude::*;
 use self::app_config::{AppConfig, read_config};
 use self::custom_sentry_client::CustomSentryClient;
 use self::error_handler::handle_error;
 use self::logging::*;
 use self::cli::CliRunner;
-
-use chrono::{DateTime, Utc};
-use lazy_static::lazy_static;
 
 static APP_CONFIG_FILE_NAME: &str = "app-config.json";
 static LOG_FILE_NAME: &str = "log/log.txt";
@@ -33,7 +34,7 @@ pub struct Global {
     pub app_config: AppConfig,
     pub sentry: CustomSentryClient,
     pub logger: Logger,
-    pub config_directory: String,
+    pub config_directory: PathBuf,
     pub app_start_time: DateTime<Utc>,
     pub cli: CliRunner,
 }
@@ -72,7 +73,7 @@ fn create_global_result() -> Result<Global> {
         app_config,
         sentry,
         logger,
-        config_directory: config_directory.get_as_string()?,
+        config_directory,
         app_start_time: Utc::now(),
         cli: CliRunner::new()
     })

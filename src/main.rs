@@ -11,6 +11,7 @@ mod list_archives;
 mod clear_cache;
 mod upload;
 mod clear_remote_cache;
+mod restore_archive;
 
 use crate::global::prelude::*;
 use crate::global::errors::CustomErrorKind;
@@ -20,6 +21,7 @@ use crate::list_archives::list_archive_command;
 use crate::clear_cache::clear_cache_command;
 use crate::upload::upload_command;
 use crate::clear_remote_cache::clear_remote_cache_command;
+use crate::restore_archive::restore_archive_command;
 
 fn main() {
     global::initialize();
@@ -33,6 +35,7 @@ fn main_result() -> Result {
     cli().register_command("clear-cache", clear_cache_command)?;
     cli().register_command("upload", upload_command)?;
     cli().register_command("clear-remote-cache", clear_remote_cache_command)?;
+    cli().register_command("restore", restore_archive_command)?;
 
     match cli().run() {
         Err(err) => {

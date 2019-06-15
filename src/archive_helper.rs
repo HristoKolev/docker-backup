@@ -11,9 +11,15 @@ use crate::archive_type::*;
 
 static ARCHIVE_FILE_EXTENSION: &str = "backup";
 
-pub struct ArchiveOptions {
-    pub file_path: String,
+pub struct CreateArchiveOptions {
+    pub file_path: PathBuf,
     pub no_encryption: bool,
+    pub archive_type: ArchiveType,
+}
+
+pub struct RestoreArchiveOptions {
+    pub file_path: PathBuf,
+    pub no_decryption: bool,
     pub archive_type: ArchiveType,
 }
 
@@ -59,7 +65,7 @@ pub fn read_metadata(path: &Path) -> Result<Option<ArchiveMetadata>> {
     })
 }
 
-pub fn create_archive<F>(options: ArchiveOptions, func: F) -> Result<ArchiveMetadata>
+pub fn create_archive<F>(options: CreateArchiveOptions, func: F) -> Result<ArchiveMetadata>
     where F: FnOnce(&str) -> Result {
 
     let archive_config = get_archive_config(&options.archive_type);
@@ -110,7 +116,7 @@ pub fn create_archive<F>(options: ArchiveOptions, func: F) -> Result<ArchiveMeta
             bash_exec!("rm {0} -f", compressed);
         }
 
-        bash_exec!("mv {} {}", &final_archive, &options.file_path);
+        bash_exec!("mv {} {}", &final_archive, &options.file_path.get_as_string()?);
 
         let metadata = read_metadata(Path::new(&options.file_path))?
             .ok_or_else(|| CustomError::from_message("The archiver somehow did not produce a correct archive."))?;
@@ -125,7 +131,43 @@ pub fn create_archive<F>(options: ArchiveOptions, func: F) -> Result<ArchiveMeta
     })
 }
 
-pub fn get_new_archive_path(archive_type: &ArchiveType) -> Result<String> {
+pub fn restore_archive<F>(options: RestoreArchiveOptions, func: F) -> Result
+    where F: FnOnce(&str, &str) -> Result {
+
+    let archive_config = get_archive_config(&options.archive_type);
+
+    let work_path = Path::new(&archive_config.temp_path)
+        .combine_with(&Uuid::new_v4().to_string());
+
+    do_try::run(|| {
+
+        bash_exec!("mkdir -p {0} && chmod 777 {0}", &work_path.get_as_string()?);
+
+        let encrypted = options.file_path.get_as_string()?;
+
+        let compressed = work_path
+            .combine_with("compressed-archive.tar.gz")
+            .get_as_string()?;
+
+        if options.no_decryption {
+            bash_exec!("cp {} {}", &encrypted, &compressed);
+        } else {
+            bash_exec!("gpg --output {} -d {}", &compressed, &encrypted);
+        }
+
+        func(&work_path.get_as_string()?, &compressed)?;
+
+        Ok(())
+
+    }).finally(|| {
+
+        bash_exec!( "rm {} -rf", work_path.get_as_string()?);
+
+        Ok(())
+    })
+}
+
+pub fn get_new_archive_path(archive_type: &ArchiveType) -> Result<PathBuf> {
 
     let archive_config = get_archive_config(archive_type);
 
@@ -144,8 +186,7 @@ pub fn get_new_archive_path(archive_type: &ArchiveType) -> Result<String> {
     );
 
     let archive_file_path = daily_folder
-        .combine_with(&archive_file_name)
-        .get_as_string()?;
+        .combine_with(&archive_file_name);
 
     Ok(archive_file_path)
 }

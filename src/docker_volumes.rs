@@ -26,3 +26,21 @@ pub fn create_docker_volumes_archive(work_path: &str) -> Result {
 
     Ok(())
 }
+
+pub fn restore_docker_volumes_archive(_work_path: &str, compressed: &str) -> Result {
+
+    let config = app_config().docker_config.clone()
+        .ok_or_else(|| CustomError::from_message("`DockerVolumes` archiving is not configured."))?;
+
+    let ps_result = bash_exec!("echo `docker ps -a -q`");
+
+    bash_exec!("systemctl stop docker");
+
+    bash_exec!("rm {0} -rf && mkdir -p {0}", &config.volumes_path);
+
+    bash_exec!("cd {} && tar -xf {} --use-compress-program=pigz", &config.volumes_path, &compressed);
+
+    bash_exec!("systemctl start docker");
+
+    Ok(())
+}
