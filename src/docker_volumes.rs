@@ -32,8 +32,6 @@ pub fn restore_docker_volumes_archive(_work_path: &str, compressed: &str) -> Res
     let config = app_config().docker_config.clone()
         .ok_or_else(|| CustomError::from_message("`DockerVolumes` archiving is not configured."))?;
 
-    let ps_result = bash_exec!("echo `docker ps -a -q`");
-
     bash_exec!("systemctl stop docker");
 
     bash_exec!("rm {0} -rf && mkdir -p {0}", &config.volumes_path);

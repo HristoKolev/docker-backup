@@ -1,12 +1,13 @@
 use std::path::Path;
+use std::collections::HashMap;
 
 use serde::{Serialize, Deserialize};
 use time::Duration;
+use chrono::Datelike;
 
 use crate::global::prelude::*;
 use crate::archive_helper::{ArchiveMetadata, read_metadata};
 use crate::archive_type::{ArchiveType, get_remote_config};
-use std::collections::HashMap;
 
 pub fn upload_archive(archive_metadata: &ArchiveMetadata, remote_config: &RemoteConfig) -> Result {
 
@@ -122,6 +123,7 @@ pub fn clear_remote_cache(archive_type: &ArchiveType) -> Result {
 
     let map: HashMap<String, Vec<_>> = archives.into_iter()
         .filter(|x| x.archive_metadata.archive_date < (*app_start_time() - Duration::days(x.remote_config.cache_expiry_days)))
+        .filter(|x| x.archive_metadata.archive_date.day() != 1 && x.archive_metadata.archive_date.day() != 15)
         .order_by(|x| x.archive_metadata.archive_date)
         .group_by(|x| x.remote_config.remote_name.clone())
         .collect();
