@@ -49,5 +49,3 @@ pub fn list_archive_command() -> Result {
 
     Ok(())
 }
-
-

@@ -75,3 +75,7 @@ Uploads any archives that are present in the local cache but are not present in 
 ### Parameters:
 
 `--archive-type, -t` => Optional filtering by archive type.
+
+## config
+
+Prints the config that the application uses. 
