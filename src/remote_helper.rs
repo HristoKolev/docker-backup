@@ -14,7 +14,7 @@ pub fn upload_archive(archive_metadata: &ArchiveMetadata, remote_config: &Remote
     let local_file_path = archive_metadata.full_path.get_as_string()?;
 
     bash_exec!(
-        "rclone copy -P {} {}:{}/",
+        "rclone copy {} {}:{}/",
         local_file_path,
         remote_config.remote_name,
         remote_config.remote_path
