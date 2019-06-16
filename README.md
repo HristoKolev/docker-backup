@@ -1,2 +1,5 @@
 # xdxd-backup
-A backup system.
+A backup system written in Rust.
+
+## Commands
+### create
