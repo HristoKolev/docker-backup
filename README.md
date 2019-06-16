@@ -6,7 +6,9 @@ Creates a backup.
 
 ### Parameters:
 `--archive-type, -t` **(required)** => The type of archive you want to create.
+
 `--file, -f` => Where to create the archive. If not specified uses the default directory from the archive config.
+
 `--no-encryption, -d` => If it's specified it does not encrypt the archives.
 
 ### Examples:
