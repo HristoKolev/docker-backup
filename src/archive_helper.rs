@@ -71,14 +71,14 @@ pub fn create_archive<F>(options: CreateArchiveOptions, func: F) -> Result<Archi
     let archive_config = get_archive_config(&options.archive_type);
 
     let work_path = Path::new(&archive_config.temp_path)
-        .combine_with(&Uuid::new_v4().to_string());
+        .join(&Uuid::new_v4().to_string());
 
     do_try::run(|| {
 
         bash_exec!("mkdir -p {0} && chmod 777 {0}", &work_path.get_as_string()?);
 
         let uncompressed = work_path
-            .combine_with("uncompressed-archive")
+            .join("uncompressed-archive")
             .get_as_string()?;
 
         bash_exec!("mkdir -p {0} && chmod 777 {0}", uncompressed);
@@ -86,7 +86,7 @@ pub fn create_archive<F>(options: CreateArchiveOptions, func: F) -> Result<Archi
         func(&uncompressed)?;
 
         let compressed = work_path
-            .combine_with("compressed-archive.tar.gz")
+            .join("compressed-archive.tar.gz")
             .get_as_string()?;
 
         bash_exec!(
@@ -98,7 +98,7 @@ pub fn create_archive<F>(options: CreateArchiveOptions, func: F) -> Result<Archi
         bash_exec!("rm {0} -rf", uncompressed);
 
         let final_archive = work_path
-            .combine_with("final.enc")
+            .join("final.enc")
             .get_as_string()?;
 
         if options.no_encryption {
@@ -137,7 +137,7 @@ pub fn restore_archive<F>(options: RestoreArchiveOptions, func: F) -> Result
     let archive_config = get_archive_config(&options.archive_type);
 
     let work_path = Path::new(&archive_config.temp_path)
-        .combine_with(&Uuid::new_v4().to_string());
+        .join(&Uuid::new_v4().to_string());
 
     do_try::run(|| {
 
@@ -146,7 +146,7 @@ pub fn restore_archive<F>(options: RestoreArchiveOptions, func: F) -> Result
         let encrypted = options.file_path.get_as_string()?;
 
         let compressed = work_path
-            .combine_with("compressed-archive.tar.gz")
+            .join("compressed-archive.tar.gz")
             .get_as_string()?;
 
         if options.no_decryption {
@@ -174,7 +174,7 @@ pub fn get_new_archive_path(archive_type: &ArchiveType) -> Result<PathBuf> {
     let now = app_start_time();
 
     let daily_folder = Path::new(&archive_config.cache_path)
-        .combine_with(&now.format("day_%Y_%m_%d").to_string())
+        .join(&now.format("day_%Y_%m_%d").to_string())
         .create_directory()?;
 
     let archive_file_name = format!(
@@ -186,7 +186,7 @@ pub fn get_new_archive_path(archive_type: &ArchiveType) -> Result<PathBuf> {
     );
 
     let archive_file_path = daily_folder
-        .combine_with(&archive_file_name);
+        .join(&archive_file_name);
 
     Ok(archive_file_path)
 }

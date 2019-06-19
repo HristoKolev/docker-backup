@@ -51,7 +51,7 @@ fn create_global_result() -> Result<Global> {
 
     let config_directory = std::env::current_exe()?.get_directory();
 
-    let config_file_path = config_directory.combine_with(APP_CONFIG_FILE_NAME);
+    let config_file_path = config_directory.join(APP_CONFIG_FILE_NAME);
 
     if !config_file_path.exists() {
         eprintln!("The `{}` file is missing.", APP_CONFIG_FILE_NAME);
@@ -62,7 +62,7 @@ fn create_global_result() -> Result<Global> {
 
     let sentry = CustomSentryClient::new(&app_config.sentry_dsn)?;
 
-    let log_file_path = config_directory.combine_with(LOG_FILE_NAME);
+    let log_file_path = config_directory.join(LOG_FILE_NAME);
 
     let logger = Logger::new(LoggingConfiguration {
         max_length: LOG_FILE_MAX_LENGTH,
@@ -116,26 +116,31 @@ pub fn initialize() {
 }
 
 /// Returns a static reference of the app config.
+#[allow(unused)]
 pub fn app_config() -> &'static AppConfig {
 
     &INSTANCE.app_config
 }
 
+#[allow(unused)]
 pub fn sentry_client() -> &'static CustomSentryClient {
 
     &INSTANCE.sentry
 }
 
+#[allow(unused)]
 pub fn logger() -> &'static Logger {
 
     &INSTANCE.logger
 }
 
+#[allow(unused)]
 pub fn app_start_time() -> &'static DateTime<Utc> {
 
     &INSTANCE.app_start_time
 }
 
+#[allow(unused)]
 pub fn cli() -> &'static CliRunner {
 
     &INSTANCE.cli
@@ -148,6 +153,16 @@ macro_rules! log {
     };
     ($($x:expr),*) => {
         crate::global::logger().log(&format!($($x,)*))?
+    };
+}
+
+#[allow(unused_macros)]
+macro_rules! elog {
+    ($x:expr) => {
+        crate::global::logger().elog(&format!("{}", $x))?
+    };
+    ($($x:expr),*) => {
+        crate::global::logger().elog(&format!($($x,)*))?
     };
 }
 

@@ -81,7 +81,7 @@ pub fn list_remote_archives(archive_type: Option<&ArchiveType>) ->  Result<Vec<R
             for remote_file in remote_files {
 
                 let full_path = Path::new(&remote_config.remote_path)
-                    .combine_with(&remote_file.name);
+                    .join(&remote_file.name);
 
                 match read_metadata(&full_path)? {
                     None => (),
