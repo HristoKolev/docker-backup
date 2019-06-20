@@ -258,7 +258,18 @@ pub fn clear_local_cache(archive_type: Option<&ArchiveType>) -> Result {
 
             log!("Deleting `{}` ...", archive_metadata.full_path.get_as_string()?);
 
-            ::std::fs::remove_file(archive_metadata.full_path)?;
+            ::std::fs::remove_file(&archive_metadata.full_path)?;
+
+            let mut daily_directory = archive_metadata.full_path.clone();
+            daily_directory.pop();
+
+            let is_empty = !::std::fs::read_dir(&daily_directory)?.any(|_x| true);
+
+            if is_empty {
+
+                log!("Deleting daily folder `{}` ...", daily_directory.get_as_string()?);
+                ::std::fs::remove_dir(daily_directory)?;
+            }
         }
     }
 
