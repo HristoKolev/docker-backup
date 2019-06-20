@@ -23,6 +23,13 @@ pub struct RestoreArchiveOptions {
     pub archive_type: ArchiveType,
 }
 
+pub struct UnpackArchiveOptions {
+    pub file_path: PathBuf,
+    pub out_path: PathBuf,
+    pub no_decryption: bool,
+    pub archive_type: ArchiveType,
+}
+
 #[derive(Debug, Clone)]
 pub struct ArchiveMetadata {
     pub archive_type: ArchiveType,
@@ -256,4 +263,41 @@ pub fn clear_local_cache(archive_type: Option<&ArchiveType>) -> Result {
     }
 
     Ok(())
+}
+
+pub fn unpack_archive(options: UnpackArchiveOptions) -> Result {
+
+    let archive_config = get_archive_config(&options.archive_type);
+
+    let work_path = Path::new(&archive_config.temp_path)
+        .join(&Uuid::new_v4().to_string());
+
+    do_try::run(|| {
+
+        bash_exec!("mkdir -p {0} && chmod 777 {0}", &work_path.get_as_string()?);
+
+        let encrypted = options.file_path.get_as_string()?;
+
+        let compressed = work_path
+            .join("compressed-archive.tar.gz")
+            .get_as_string()?;
+
+        if options.no_decryption {
+            bash_exec!("cp {} {}", &encrypted, &compressed);
+        } else {
+            bash_exec!("gpg --output {} -d {}", &compressed, &encrypted);
+        }
+
+        let out_path = options.out_path.get_as_string()?;
+
+        bash_exec!("mkdir -p {0} && cd {0} && tar -xf {1} --use-compress-program=pigz", &out_path, &compressed);
+
+        Ok(())
+
+    }).finally(|| {
+
+        bash_exec!( "rm {} -rf", work_path.get_as_string()?);
+
+        Ok(())
+    })
 }
