@@ -17,12 +17,16 @@ Creates a backup.
 * Creates a docker-volumes archive.
 
 ```sh
+
 xdxd-backup create -t docker-volumes
+
 ```
 * Creates a docker-volumes archive in the `/home` directory without using encryption.
 
 ```sh
+
 xdxd-backup create -t docker-volumes -f /home/docker-volumes.backup --no-encryption
+
 ```
 
 ## restore
@@ -41,7 +45,32 @@ Restores a backup.
 * Restores a docker-volumes archive.
 
 ```sh
+
 xdxd-backup restore -t docker-volumes -f /home/docker-volumes.backup
+
+```
+
+## unpack
+
+Unpacks a backup into a specified directory.
+
+### Parameters:
+`--archive-type, -t` **(required)** => The type of archive you want to unpack.
+
+`--file, -f` **(required)** => Where to unpack the archive from.
+
+`--out-path, -o` **(required)** => Where to unpack the archive to.
+
+`--no-decryption, -d` => If it's specified it does not decrypt the archive.
+
+### Examples:
+
+* Unpacks a docker-volumes archive.
+
+```sh
+
+xdxd-backup unpack -t docker-volumes -f /home/docker-volumes.backup -o /home/unpacked
+
 ```
 
 ## list
