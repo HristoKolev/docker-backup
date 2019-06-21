@@ -20,7 +20,7 @@ impl CliRunner {
         where F: for<'a, 'b> FnOnce(App<'a, 'b>) -> App<'a, 'b> {
 
         let mut matches = App::new(format!("XDXD Backup"))
-            .version("1.0")
+            .version(env!("CARGO_PKG_VERSION"))
             .author("Hristo Kolev")
             .about("Backs things up.");
 
@@ -57,27 +57,22 @@ impl CliRunner {
 
         let command_map = self.command_map.lock()?;
 
-        let mut available_commands: Vec<String> = command_map.iter()
+        let available_commands = command_map.iter()
             .map(|(key, _val)| key.to_string())
-            .collect();
+            .order_by(|x| x.to_string())
+            .collect_vec();
 
-        available_commands.sort_by(|a,b| a.cmp(b));
+        let invalid_command_error = || CustomError::user_error(&format!(
+            "Please provide a valid command. Available commands: {}", available_commands.join(", ")
+        ));
 
-        if let Some(command_name) = command_name {
-            let command_name = command_name?.to_lowercase();
+        let command_name = command_name.map(|x | x.map(|y| y.to_lowercase()))
+            .ok_or_else(invalid_command_error)??;
 
-            if let Some(command) = command_map.get(&command_name) {
-                command()?;
-            } else {
-                return Err(CustomError::user_error(&format!(
-                    "Please provide a valid command. Available commands: {}", available_commands.join(", ")
-                )));
-            }
-        } else {
-            return Err(CustomError::user_error(&format!(
-                "Please provide a valid command. Available commands: {}", available_commands.join(", ")
-            )));
-        }
+        let command = command_map.get(&command_name)
+            .ok_or_else(invalid_command_error)?;
+
+        command()?;
 
         Ok(())
     }
