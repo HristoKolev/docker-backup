@@ -1,9 +1,10 @@
 use crate::global::prelude::*;
 use crate::global::{do_try, app_config};
 
-pub fn create_docker_volumes_archive(work_path: &str) -> Result {
+pub fn create_docker_volumes_archive(config_name: &str, work_path: &str) -> Result {
 
-    let config = app_config().docker_config.clone()
+    let config = app_config().docker_config.as_ref()
+        .and_then(|x| x.get(config_name).cloned())
         .ok_or_else(|| CustomError::from_message("`DockerVolumes` archiving is not configured."))?;
 
     let ps_result = bash_exec!("echo `docker ps -a -q`");
@@ -27,9 +28,10 @@ pub fn create_docker_volumes_archive(work_path: &str) -> Result {
     Ok(())
 }
 
-pub fn restore_docker_volumes_archive(_work_path: &str, compressed: &str) -> Result {
+pub fn restore_docker_volumes_archive(config_name: &str, _work_path: &str, compressed: &str) -> Result {
 
-    let config = app_config().docker_config.clone()
+    let config = app_config().docker_config.as_ref()
+        .and_then(|x| x.get(config_name).cloned())
         .ok_or_else(|| CustomError::from_message("`DockerVolumes` archiving is not configured."))?;
 
     bash_exec!("systemctl stop docker");

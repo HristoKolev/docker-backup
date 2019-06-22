@@ -1,6 +1,7 @@
 use serde::{Serialize, Deserialize};
 
 use super::prelude::*;
+use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct EmailConfig {
@@ -40,7 +41,7 @@ pub struct AppConfig {
     pub sentry_dsn: String,
     pub email_config: EmailConfig,
     pub archive_config: ArchiveConfig,
-    pub docker_config: Option<DockerConfig>,
+    pub docker_config: Option<HashMap<String, DockerConfig>>,
     pub remote_config: Option<Vec<RemoteConfig>>,
 }
 

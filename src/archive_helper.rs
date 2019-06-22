@@ -46,9 +46,10 @@ pub fn read_metadata(path: &Path) -> Result<Option<ArchiveMetadata>> {
         return Ok(None);
     }
 
-    let prefix = parts[0];
-    let timestamp = parts[2];
-    let extension = parts[3];
+    let archive_type_string = parts[0];
+    let archive_type_name = parts[1];
+    let timestamp = parts[3];
+    let extension = parts[4];
 
     if extension != ARCHIVE_FILE_EXTENSION {
         return Ok(None);
@@ -57,7 +58,7 @@ pub fn read_metadata(path: &Path) -> Result<Option<ArchiveMetadata>> {
     Ok(match timestamp.parse::<i64>() {
         Ok(epoch) => {
 
-            let archive_type = match parse_archive_type(prefix) {
+            let archive_type = match parse_archive_type(&format!("{}.{}", archive_type_string, archive_type_name)) {
                 Ok(x) => x,
                 Err(_) => return Ok(None)
             };
@@ -73,7 +74,7 @@ pub fn read_metadata(path: &Path) -> Result<Option<ArchiveMetadata>> {
 }
 
 pub fn create_archive<F>(options: CreateArchiveOptions, func: F) -> Result<ArchiveMetadata>
-    where F: FnOnce(&str) -> Result {
+    where F: FnOnce(&str, &str) -> Result {
 
     let archive_config = get_archive_config(&options.archive_type);
 
@@ -90,7 +91,7 @@ pub fn create_archive<F>(options: CreateArchiveOptions, func: F) -> Result<Archi
 
         bash_exec!("mkdir -p {0} && chmod 777 {0}", uncompressed);
 
-        func(&uncompressed)?;
+        func(&options.archive_type.get_config_name(), &uncompressed)?;
 
         let compressed = work_path
             .join("compressed-archive.tar.gz")
@@ -139,7 +140,7 @@ pub fn create_archive<F>(options: CreateArchiveOptions, func: F) -> Result<Archi
 }
 
 pub fn restore_archive<F>(options: RestoreArchiveOptions, func: F) -> Result
-    where F: FnOnce(&str, &str) -> Result {
+    where F: FnOnce(&str, &str, &str) -> Result {
 
     let archive_config = get_archive_config(&options.archive_type);
 
@@ -162,7 +163,7 @@ pub fn restore_archive<F>(options: RestoreArchiveOptions, func: F) -> Result
             bash_exec!("gpg --output {} -d {}", &compressed, &encrypted);
         }
 
-        func(&work_path.get_as_string()?, &compressed)?;
+        func(&options.archive_type.get_config_name(), &work_path.get_as_string()?, &compressed)?;
 
         Ok(())
 

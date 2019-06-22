@@ -112,46 +112,6 @@ impl PathExtensions for Path {
     }
 }
 
-pub trait OptionFlatten<T> {
-    fn flatten(self) -> Option<T>;
-}
-
-impl<T> OptionFlatten<T> for Option<Option<T>> {
-    fn flatten(self) -> Option<T> {
-        match self {
-            None => None,
-            Some(v) => v,
-        }
-    }
-}
-
-impl<T> OptionFlatten<T> for Option<Option<Option<T>>> {
-    fn flatten(self) -> Option<T> {
-        match self {
-            None => None,
-            Some(v) => v.flatten(),
-        }
-    }
-}
-
-impl<T> OptionFlatten<T> for Option<Option<Option<Option<T>>>> {
-    fn flatten(self) -> Option<T> {
-        match self {
-            None => None,
-            Some(v) => v.flatten(),
-        }
-    }
-}
-
-impl<T> OptionFlatten<T> for Option<Option<Option<Option<Option<T>>>>> {
-    fn flatten(self) -> Option<T> {
-        match self {
-            None => None,
-            Some(v) => v.flatten(),
-        }
-    }
-}
-
 pub trait OptionBorrow<T> {
     fn map<U, F: FnOnce(&T) -> U>(&self, f: F) -> Option<U>;
     fn map_result<U, F: FnOnce(&T) -> Result<U>>(&self, f: F) -> Result<Option<U>>;
