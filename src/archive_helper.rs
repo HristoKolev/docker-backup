@@ -40,7 +40,8 @@ pub struct ArchiveMetadata {
 pub fn read_metadata(path: &Path) -> Result<Option<ArchiveMetadata>> {
 
     let archive_file_path_string = path.file_name_as_string()?;
-    let parts: Vec<&str> = archive_file_path_string.split(".").collect();
+
+    let parts = archive_file_path_string.split(".").collect_vec();
 
     if parts.len() != 5 {
         return Ok(None);

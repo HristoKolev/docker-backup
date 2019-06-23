@@ -27,14 +27,14 @@ impl CliRunner {
         matches = f(matches);
 
         let mut i = 0;
-        let args: Vec<OsString> = ::std::env::args_os().filter(|_| {
+        let args = ::std::env::args_os().filter(|_| {
 
             let result = i != 1;
 
             i += 1;
 
             result
-        }).collect();
+        }).collect_vec();
 
         matches.get_matches_from(args)
     }

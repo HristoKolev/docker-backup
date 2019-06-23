@@ -129,16 +129,16 @@ pub fn clear_remote_cache(archive_type: &ArchiveType) -> Result {
 
     for (remote_name, archives) in map {
 
-        let remote_config = get_remote_config(archive_type)
-            .into_iter().first(|x|x.remote_name == remote_name)
+        let remote_config = get_remote_config(archive_type).into_iter()
+            .first(|x|x.remote_name == remote_name)
             .ok_or_else(|| CustomError::from_message(&format!("No remote found with this name. Name: {}", remote_name)))?;
 
         let take_count = if ((archives.len() as i32) - remote_config.min_archive_count) < 0 {0} else {((archives.len() as i32) - remote_config.min_archive_count)};
 
-        let for_delete: Vec<RemoteArchiveMetadata> = archives
+        let for_delete = archives
             .into_iter()
             .take(take_count as usize)
-            .collect();
+            .collect_vec();
 
         for remote_archive_metadata in for_delete {
 

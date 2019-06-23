@@ -139,7 +139,7 @@ pub trait IteratorExtensions: Iterator {
     fn order_by<K, F>(self, f: F) -> ::std::vec::IntoIter<Self::Item>
         where Self: Sized, K: Ord, F: FnMut(&Self::Item) -> K {
 
-        let mut vec: Vec<Self::Item> = self.collect();
+        let mut vec = self.collect_vec();
         vec.sort_by_key(f);
         vec.into_iter()
     }
@@ -147,7 +147,7 @@ pub trait IteratorExtensions: Iterator {
     fn order_by_desc<K, F>(self, f: F) -> ::std::vec::IntoIter<Self::Item>
         where Self: Sized, K: Ord, F: FnMut(&Self::Item) -> K {
 
-        let mut vec: Vec<Self::Item> = self.collect();
+        let mut vec = self.collect_vec();
         vec.sort_by_key(f);
         vec.reverse();
         vec.into_iter()
@@ -173,7 +173,7 @@ pub trait IteratorExtensions: Iterator {
     fn first<F>(self, f: F) -> Option<Self::Item>
         where Self: Sized, Self::Item: Clone, F: Fn(&Self::Item) -> bool {
 
-        let vec: Vec<Self::Item> = self.filter(f).take(1).collect();
+        let vec = self.filter(f).take(1).collect_vec();
 
         vec.first().map(|x| x.clone())
     }
@@ -194,7 +194,7 @@ pub trait IteratorExtensions: Iterator {
     fn map_result<K, F>(self, f: F) -> Result<::std::vec::IntoIter<K>>
         where Self: Sized, F: Fn(&Self::Item) -> Result<K> {
 
-        let source: Vec<Self::Item> = self.collect();
+        let source = self.collect_vec();
 
         let mut destination = Vec::new();
 

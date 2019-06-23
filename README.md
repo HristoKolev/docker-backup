@@ -18,14 +18,14 @@ Creates a backup.
 
 ```sh
 
-xdxd-backup create -t docker-volumes
+xdxd-backup create -t docker-volumes.default
 
 ```
 * Creates a docker-volumes archive in the `/home` directory without using encryption.
 
 ```sh
 
-xdxd-backup create -t docker-volumes -f /home/docker-volumes.backup --no-encryption
+xdxd-backup create -t docker-volumes.default -f /home/docker-volumes.backup --no-encryption
 
 ```
 
@@ -46,7 +46,7 @@ Restores a backup.
 
 ```sh
 
-xdxd-backup restore -t docker-volumes -f /home/docker-volumes.backup
+xdxd-backup restore -t docker-volumes.default -f /home/docker-volumes.backup
 
 ```
 
@@ -69,7 +69,7 @@ Unpacks a backup into a specified directory.
 
 ```sh
 
-xdxd-backup unpack -t docker-volumes -f /home/docker-volumes.backup -o /home/unpacked
+xdxd-backup unpack -t docker-volumes.default -f /home/docker-volumes.backup -o /home/unpacked
 
 ```
 

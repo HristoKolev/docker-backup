@@ -53,7 +53,8 @@ pub fn upload_command() -> Result {
     for (remote_name, remote_archives) in remote_map {
 
         let type_map: HashMap<ArchiveType, Vec<_>> =  remote_archives.into_iter()
-            .group_by(|x| x.archive_metadata.archive_type.clone()).collect();
+            .group_by(|x| x.archive_metadata.archive_type.clone())
+            .collect();
 
         for (archive_type, remote_archives) in type_map {
 

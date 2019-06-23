@@ -94,9 +94,9 @@ fn process_remotes(archive_metadata: &ArchiveMetadata) -> Result {
 
     let remotes = get_remote_config(&archive_metadata.archive_type);
 
-    let results: Vec<Result> = remotes.into_iter()
+    let results = remotes.into_iter()
         .map(|x| process_remote(&archive_metadata, &x))
-        .collect();
+        .collect_vec();
 
     for result in results {
 

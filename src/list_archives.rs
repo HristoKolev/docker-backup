@@ -1,7 +1,7 @@
 use clap::Arg;
 
 use crate::global::prelude::*;
-use crate::archive_helper::{list_local_archives, ArchiveMetadata};
+use crate::archive_helper::{list_local_archives};
 use crate::archive_type::*;
 
 struct ListCommandOptions {
@@ -36,11 +36,11 @@ pub fn list_archive_command() -> Result {
 
     let options = list_command_options()?;
 
-    let list: Vec<ArchiveMetadata> = list_local_archives(options.archive_type.as_ref())?
+    let list = list_local_archives(options.archive_type.as_ref())?
         .into_iter()
         .order_by(|x| x.archive_date)
         .rev()
-        .collect();
+        .collect_vec();
 
     for item in list {
         log!(
