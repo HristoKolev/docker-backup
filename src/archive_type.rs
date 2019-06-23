@@ -13,7 +13,7 @@ pub fn parse_archive_type(prefix: &str) -> Result<ArchiveType> {
 
     for archive_type in ArchiveType::all() {
 
-        if archive_type.to_string() == format!("{}.", &prefix.to_lowercase()) {
+        if archive_type.to_string() == prefix.to_lowercase() {
             return Ok(archive_type);
         }
     }
@@ -56,7 +56,26 @@ pub fn get_remote_config(archive_type: &ArchiveType) -> Vec<RemoteConfig> {
 impl ArchiveType {
 
     pub fn all() -> Vec<ArchiveType> {
-        ArchiveType::iter().collect::<Vec<ArchiveType>>()
+
+        let all: Vec<ArchiveType> = ArchiveType::iter().collect();
+
+        let mut result = Vec::new();
+
+        for element in all {
+
+            match element {
+                ArchiveType::DockerVolumes(_) => {
+                    app_config().docker_config.as_ref()
+                        .map(|x| {
+                            for (key, _) in x {
+                                result.push(ArchiveType::DockerVolumes(key.to_string()))
+                            }
+                        });
+                }
+            }
+        }
+
+        result
     }
 
     pub fn get_config_name(&self) -> String {

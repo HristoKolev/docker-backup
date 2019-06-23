@@ -1,3 +1,5 @@
+use std::io::{Write};
+
 use crate::global::prelude::*;
 
 pub fn config_command() -> Result {
@@ -6,7 +8,9 @@ pub fn config_command() -> Result {
 
     let json = serde_json::to_string_pretty(app_config)?;
 
-    println!("{}", json);
+    let stdout = &mut ::std::io::stdout();
+
+    write!(stdout, "{}\n", json)?;
 
     Ok(())
 }
