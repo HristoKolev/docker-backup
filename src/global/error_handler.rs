@@ -35,14 +35,11 @@ impl<R> ResultExtensionsCrashOnError<R> for Result<R> {
 
     fn crash_on_error(self) -> R {
 
-        match self {
-            Ok(x) => x,
-            Err(err) => {
-                handle_fatal_error(&err)
-                    .expect(&format!("An error occurred while handling an error. {:#?}", &err));
+        self.unwrap_or_else(|err| {
+            handle_fatal_error(&err)
+                .expect(&format!("An error occurred while handling an error. {:#?}", &err));
 
-                ::std::process::exit(1)
-            }
-        }
+            ::std::process::exit(1)
+        })
     }
 }

@@ -31,7 +31,7 @@ pub fn get_archive_config(archive_type: &ArchiveType) -> ArchiveConfig {
             .and_then(|x| x.archive_config)
     };
 
-    archive_config.unwrap_or(app_config.archive_config.clone())
+    archive_config.unwrap_or_else(|| app_config.archive_config.clone())
 }
 
 pub fn get_remote_config(archive_type: &ArchiveType) -> Vec<RemoteConfig> {
@@ -44,13 +44,9 @@ pub fn get_remote_config(archive_type: &ArchiveType) -> Vec<RemoteConfig> {
             .and_then(|x| x.remote_config)
     };
 
-    match custom_config {
-        Some(x) => x,
-        None => match app_config.remote_config.clone() {
-            Some(x) => x,
-            None => Vec::new()
-        }
-    }
+    custom_config
+        .or_else(|| app_config.remote_config.clone())
+        .unwrap_or_else(|| Vec::new())
 }
 
 impl ArchiveType {

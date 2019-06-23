@@ -57,10 +57,9 @@ pub struct RemoteArchiveMetadata {
 
 pub fn list_remote_archives(archive_type: Option<&ArchiveType>) ->  Result<Vec<RemoteArchiveMetadata>> {
 
-    let archive_types = match archive_type {
-        Some(x) => vec![x.clone()],
-        None => ArchiveType::all(),
-    };
+    let archive_types = archive_type
+        .map(|x| vec![x.clone()])
+        .unwrap_or_else(|| ArchiveType::all());
 
     let mut metadata = Vec::new();
 
@@ -84,7 +83,6 @@ pub fn list_remote_archives(archive_type: Option<&ArchiveType>) ->  Result<Vec<R
                     .join(&remote_file.name);
 
                 match read_metadata(&full_path)? {
-                    None => (),
                     Some(archive_metadata) => {
 
                         if archive_metadata.archive_type == archive_type {
@@ -95,7 +93,8 @@ pub fn list_remote_archives(archive_type: Option<&ArchiveType>) ->  Result<Vec<R
                                 archive_metadata
                             })
                         }
-                    }
+                    },
+                    None => (),
                 };
             }
         }

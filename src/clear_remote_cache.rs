@@ -36,10 +36,9 @@ pub fn clear_remote_cache_command() -> Result {
 
     let options = clear_remote_cache_command_options()?;
 
-    let archive_types = match options.archive_type {
-        Some(x) => vec![x.clone()],
-        None => ArchiveType::all(),
-    };
+    let archive_types = options.archive_type
+        .map(|x| vec![x.clone()])
+        .unwrap_or_else(|| ArchiveType::all());
 
     let mut results = Vec::new();
 
