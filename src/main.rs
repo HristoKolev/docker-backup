@@ -14,6 +14,7 @@ mod clear_remote_cache;
 mod restore_archive;
 mod config;
 mod unpack;
+mod directory_archive;
 
 use crate::global::prelude::*;
 use crate::global::errors::CustomErrorKind;

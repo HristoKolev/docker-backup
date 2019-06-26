@@ -36,12 +36,20 @@ pub struct DockerConfig {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct DirectoryConfig {
+    pub directory_path: String,
+    pub archive_config: Option<ArchiveConfig>,
+    pub remote_config: Option<Vec<RemoteConfig>>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AppConfig {
     pub hostname: String,
     pub sentry_dsn: String,
     pub email_config: EmailConfig,
     pub archive_config: ArchiveConfig,
     pub docker_config: Option<HashMap<String, DockerConfig>>,
+    pub directory_config: Option<HashMap<String, DirectoryConfig>>,
     pub remote_config: Option<Vec<RemoteConfig>>,
 }
 

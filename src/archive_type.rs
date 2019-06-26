@@ -3,10 +3,12 @@ use strum_macros::EnumIter;
 
 use crate::global::prelude::*;
 use crate::docker_volumes::{create_docker_volumes_archive, restore_docker_volumes_archive};
+use crate::directory_archive::{create_directory_archive, restore_directory_archive};
 
 #[derive(Clone, Debug, EnumIter, PartialEq, Eq, Hash)]
 pub enum ArchiveType {
-    DockerVolumes(String)
+    DockerVolumes(String),
+    Directory(String),
 }
 
 pub fn parse_archive_type(prefix: &str) -> Result<ArchiveType> {
@@ -28,6 +30,9 @@ pub fn get_archive_config(archive_type: &ArchiveType) -> ArchiveConfig {
     let archive_config = match archive_type {
         ArchiveType::DockerVolumes(name) => app_config.docker_config.as_ref()
             .and_then(|x| x.get(name).cloned())
+            .and_then(|x| x.archive_config),
+        ArchiveType::Directory(name) => app_config.directory_config.as_ref()
+            .and_then(|x| x.get(name).cloned())
             .and_then(|x| x.archive_config)
     };
 
@@ -40,6 +45,9 @@ pub fn get_remote_config(archive_type: &ArchiveType) -> Vec<RemoteConfig> {
 
     let custom_config = match archive_type {
         ArchiveType::DockerVolumes(name) => app_config.docker_config.as_ref()
+            .and_then(|x| x.get(name).cloned())
+            .and_then(|x| x.remote_config),
+        ArchiveType::Directory(name) => app_config.directory_config.as_ref()
             .and_then(|x| x.get(name).cloned())
             .and_then(|x| x.remote_config)
     };
@@ -67,6 +75,14 @@ impl ArchiveType {
                                 result.push(ArchiveType::DockerVolumes(key.to_string()))
                             }
                         });
+                },
+                ArchiveType::Directory(_) => {
+                    app_config().directory_config.as_ref()
+                        .map(|x| {
+                            for (key, _) in x {
+                                result.push(ArchiveType::Directory(key.to_string()))
+                            }
+                        });
                 }
             }
         }
@@ -76,7 +92,8 @@ impl ArchiveType {
 
     pub fn get_config_name(&self) -> String {
         match self {
-            ArchiveType::DockerVolumes(name) => name.clone()
+            ArchiveType::DockerVolumes(name) => name.clone(),
+            ArchiveType::Directory(name) => name.clone()
         }
     }
 }
@@ -84,7 +101,8 @@ impl ArchiveType {
 impl ToString for ArchiveType {
     fn to_string(&self) -> String {
         match self {
-            ArchiveType::DockerVolumes(name) => format!("docker-volumes.{}", name)
+            ArchiveType::DockerVolumes(name) => format!("docker-volumes.{}", name),
+            ArchiveType::Directory(name) => format!("directory.{}", name),
         }
     }
 }
@@ -92,13 +110,15 @@ impl ToString for ArchiveType {
 pub fn get_create_archive(archive_type: &ArchiveType) -> impl FnOnce(&str, &str) -> Result {
 
     match archive_type {
-        ArchiveType::DockerVolumes(_) => create_docker_volumes_archive
+        ArchiveType::DockerVolumes(_) => create_docker_volumes_archive,
+        ArchiveType::Directory(_) => create_directory_archive,
     }
 }
 
 pub fn get_restore_archive(archive_type: &ArchiveType) -> impl FnOnce(&str, &str, &str) -> Result {
 
     match archive_type {
-        ArchiveType::DockerVolumes(_) => restore_docker_volumes_archive
+        ArchiveType::DockerVolumes(_) => restore_docker_volumes_archive,
+        ArchiveType::Directory(_) => restore_directory_archive,
     }
 }

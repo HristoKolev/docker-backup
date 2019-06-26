@@ -99,7 +99,7 @@ pub fn create_archive<F>(options: CreateArchiveOptions, func: F) -> Result<Archi
             .get_as_string()?;
 
         bash_exec!(
-            "cd {0} && tar -cf {1} --use-compress-program=pigz *",
+            "cd {0} && tar -cf {1} --use-compress-program=pigz .",
             uncompressed,
             compressed
         );
@@ -202,10 +202,9 @@ pub fn get_new_archive_path(archive_type: &ArchiveType) -> Result<PathBuf> {
 
 pub fn list_local_archives(archive_type: Option<&ArchiveType>) -> Result<Vec<ArchiveMetadata>> {
 
-    let archive_types = match archive_type {
-        Some(x) => vec![x.clone()],
-        None => ArchiveType::all(),
-    };
+    let archive_types = archive_type
+        .map(|x| vec![x.clone()])
+        .unwrap_or_else(|| ArchiveType::all());
 
     let mut archives = Vec::new();
 
