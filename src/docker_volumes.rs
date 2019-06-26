@@ -7,20 +7,22 @@ pub fn create_docker_volumes_archive(config_name: &str, work_path: &str) -> Resu
         .and_then(|x| x.get(config_name).cloned())
         .ok_or_else(|| CustomError::from_message("`DockerVolumes` archiving is not configured."))?;
 
-    let ps_result = bash_exec!("echo `docker ps -a -q`");
+    let ps_result = bash_exec!(r##"docker ps --filter="status=running" -q"##);
+
+    let container_ids = ps_result.stdout.replace("\n", " ");
 
     do_try::run(|| {
 
-        bash_exec!("rsync -a {}/ {}/", config.volumes_path, work_path);
+        bash_exec!("rsync -a --delete {}/ {}/", config.volumes_path, work_path);
 
-        bash_exec!("docker pause {}", ps_result.stdout);
+        bash_exec!("docker pause {}", container_ids);
 
-        bash_exec!("rsync -a {}/ {}/", config.volumes_path, work_path);
+        bash_exec!("rsync -a --delete {}/ {}/", config.volumes_path, work_path);
 
         Ok(())
     }).finally(|| {
 
-        bash_exec!("docker unpause {}", ps_result.stdout);
+        bash_exec!("docker unpause {}", container_ids);
 
         Ok(())
     })?;
