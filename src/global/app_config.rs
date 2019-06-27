@@ -43,6 +43,14 @@ pub struct DirectoryConfig {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct KvmMachineConfig {
+    pub vm_name: String,
+    pub device_name: String,
+    pub archive_config: Option<ArchiveConfig>,
+    pub remote_config: Option<Vec<RemoteConfig>>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AppConfig {
     pub hostname: String,
     pub sentry_dsn: String,
@@ -50,6 +58,7 @@ pub struct AppConfig {
     pub archive_config: ArchiveConfig,
     pub docker_config: Option<HashMap<String, DockerConfig>>,
     pub directory_config: Option<HashMap<String, DirectoryConfig>>,
+    pub kvm_machine_config: Option<HashMap<String, KvmMachineConfig>>,
     pub remote_config: Option<Vec<RemoteConfig>>,
 }
 

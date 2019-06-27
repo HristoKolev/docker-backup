@@ -19,6 +19,7 @@ pub enum CustomErrorKind {
     Failure(failure::Error),
     HandlebarsError(handlebars::TemplateRenderError),
     UserError(String),
+    XmlError(roxmltree::Error),
 }
 
 #[derive(Debug)]
@@ -43,6 +44,7 @@ impl fmt::Debug for CustomErrorKind {
             Failure(err) => return err.fmt(f),
             HandlebarsError(err) => return err.fmt(f),
             UserError(err) => return err.fmt(f),
+            XmlError(err) => return err.fmt(f),
         };
     }
 }
@@ -63,6 +65,7 @@ impl ToString for CustomErrorKind {
             Failure(err) => return err.to_string(),
             HandlebarsError(err) => return err.to_string(),
             UserError(err) => return err.to_string(),
+            XmlError(err) => return err.to_string(),
         }
     }
 }
@@ -193,6 +196,15 @@ impl From<handlebars::TemplateRenderError> for CustomError {
     fn from(err: handlebars::TemplateRenderError) -> Self {
         CustomError {
             kind: HandlebarsError(err),
+            backtrace: Backtrace::new(),
+        }
+    }
+}
+
+impl From<roxmltree::Error> for CustomError {
+    fn from(err: roxmltree::Error) -> Self {
+        CustomError {
+            kind: XmlError(err),
             backtrace: Backtrace::new(),
         }
     }

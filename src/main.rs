@@ -15,6 +15,7 @@ mod restore_archive;
 mod config;
 mod unpack;
 mod directory_archive;
+mod kvm_machine;
 
 use crate::global::prelude::*;
 use crate::global::errors::CustomErrorKind;
