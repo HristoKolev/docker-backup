@@ -59,8 +59,8 @@ pub fn upload_command() -> Result {
         for (archive_type, remote_archives) in type_map {
 
             let remote_config = get_remote_config(&archive_type)
-                .into_iter().first(|x|x.remote_name == remote_name)
-                .ok_or_else(|| CustomError::from_message(&format!("No remote found with this name. Name: {}", remote_name)))?;
+                .into_iter().filter_first(|x|x.remote_name == remote_name)
+                .or_error(&format!("No remote found with this name. Name: {}", remote_name))?;
 
             results.push(process_remote(&local_archives, &remote_archives, &remote_config));
         }

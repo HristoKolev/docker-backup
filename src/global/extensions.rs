@@ -37,7 +37,7 @@ impl OsStrExtensions for OsStr {
     fn get_as_string(&self) -> Result<String> {
 
         Ok(self.to_str()
-            .ok_or_else(|| CustomError::from_message("The OsStr cannot be converted to &str because it is not valid."))
+            .or_error("The OsStr cannot be converted to &str because it is not valid.")
             ?.to_string())
     }
 }
@@ -56,32 +56,29 @@ impl PathExtensions for Path {
 
     fn get_as_string(&self) -> Result<String> {
         Ok(self.to_str()
-            .ok_or_else(|| CustomError::from_message("The Path cannot be converted to &str because it is not valid."))?
+            .or_error("The Path cannot be converted to &str because it is not valid.")?
             .to_string())
     }
 
     fn extension_as_string(&self) -> Result<String> {
 
         Ok(self.extension()
-            .ok_or_else(|| CustomError::from_message(
-                "The file does not have an extension"
-            ))?.get_as_string()?)
+            .or_error("The file does not have an extension")?
+            .get_as_string()?)
     }
 
     fn file_stem_as_string(&self) -> Result<String> {
 
         Ok(self.file_stem()
-            .ok_or_else(|| CustomError::from_message(
-                "The file does not have a `file_stem`."
-            ))?.get_as_string()?)
+            .or_error("The file does not have a `file_stem`.")?
+            .get_as_string()?)
     }
 
     fn file_name_as_string(&self) -> Result<String> {
 
         Ok(self.file_name()
-            .ok_or_else(|| CustomError::from_message(
-                "The file does not have a `file_stem`."
-            ))?.get_as_string()?)
+            .or_error("The file does not have a `file_stem`.")?
+            .get_as_string()?)
     }
 
     fn get_directory_as_string(&self) -> Result<String> {
@@ -112,12 +109,13 @@ impl PathExtensions for Path {
     }
 }
 
-pub trait OptionBorrow<T> {
+pub trait OptionExtensions<T> {
     fn map<U, F: FnOnce(&T) -> U>(&self, f: F) -> Option<U>;
     fn map_result<U, F: FnOnce(&T) -> Result<U>>(&self, f: F) -> Result<Option<U>>;
+    fn or_error(self, error_message: &str) -> Result<T>;
 }
 
-impl<T> OptionBorrow<T> for Option<T> {
+impl<T> OptionExtensions<T> for Option<T> {
 
     fn map<U, F: FnOnce(&T) -> U>(&self, f: F) -> Option<U> {
         match self {
@@ -131,6 +129,11 @@ impl<T> OptionBorrow<T> for Option<T> {
             Some(x) => Some(f(x)?),
             None => None,
         })
+    }
+
+    fn or_error(self, msg: &str) -> Result<T> {
+
+        self.ok_or_else(||  CustomError::from_message(msg))
     }
 }
 
@@ -170,12 +173,25 @@ pub trait IteratorExtensions: Iterator {
         group_map.into_iter()
     }
 
-    fn first<F>(self, f: F) -> Option<Self::Item>
+    fn filter_first<F>(self, f: F) -> Option<Self::Item>
         where Self: Sized, Self::Item: Clone, F: Fn(&Self::Item) -> bool {
 
         let vec = self.filter(f).take(1).collect_vec();
 
         vec.first().map(|x| x.clone())
+    }
+
+    fn first(self) -> Option<Self::Item>
+        where Self: Sized, Self::Item: Clone {
+
+        let vec = self.take(1).collect_vec();
+
+        vec.first().map(|x| x.clone())
+    }
+
+    fn has_any(&mut self) -> bool {
+
+        self.next().is_some()
     }
 
     fn any_result<F>(self, f: F) -> Result<bool>

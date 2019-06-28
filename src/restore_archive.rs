@@ -53,12 +53,12 @@ fn restore_command_options() -> Result<RestoreCommandOptions> {
     }
 
     let archive_type_string = matches.value_of(ARCHIVE_TYPE_VALUE)
-        .ok_or_else(|| CustomError::from_message(&format!("No value for: {}", ARCHIVE_TYPE_VALUE)))?;
+        .or_error(&format!("No value for: {}", ARCHIVE_TYPE_VALUE))?;
 
     let archive_type = parse_archive_type(archive_type_string)?;
 
     let file_path = matches.value_of(FILE_VALUE)
-        .ok_or_else(|| CustomError::from_message(&format!("No value for: {}", FILE_VALUE)))?;
+        .or_error(&format!("No value for: {}", FILE_VALUE))?;
 
     let no_decryption = matches.is_present(NO_DECRYPTION_VALUE);
 

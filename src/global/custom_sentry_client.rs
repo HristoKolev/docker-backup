@@ -201,7 +201,7 @@ fn parse_dsn(dsn: &str) -> Result<CustomDsn> {
 
     let url = Url::parse(dsn)?;
 
-    let domain = url.domain().ok_or_else(|| CustomError::from_message("Invalid dsn domain."))?;
+    let domain = url.domain().or_error("Invalid dsn domain.")?;
     let port = url.port().unwrap_or(80);
     let scheme = url.scheme();
     let last_index = url.path().last_index_of('/').unwrap_or(0);

@@ -15,14 +15,11 @@ pub fn exec(command: &str) -> Result<CommandResult> {
         .stdin(Stdio::piped())
         .spawn()?;
 
-    let stdout = process.stdout.take()
-        .ok_or_else(|| CustomError::from_message("stdout was not redirected."))?;
+    let stdout = process.stdout.take().or_error("stdout was not redirected.")?;
 
-    let stderr = process.stderr.take()
-        .ok_or_else(|| CustomError::from_message("stderr was not redirected."))?;
+    let stderr = process.stderr.take().or_error("stderr was not redirected.")?;
 
-    let stdin = process.stdin.as_mut()
-        .ok_or_else(|| CustomError::from_message("stdin was not redirected."))?;
+    let stdin = process.stdin.as_mut().or_error("stdin was not redirected.")?;
 
     let stdout_thread : JoinHandle<Result<String>> = thread::spawn(|| {
 

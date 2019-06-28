@@ -128,7 +128,7 @@ pub fn create_archive<F>(options: CreateArchiveOptions, func: F) -> Result<Archi
         bash_exec!("mv {} {}", &final_archive, &options.file_path.get_as_string()?);
 
         let metadata = read_metadata(Path::new(&options.file_path))?
-            .ok_or_else(|| CustomError::from_message("The archiver somehow did not produce a correct archive."))?;
+            .or_error("The archiver somehow did not produce a correct archive.")?;
 
         Ok(metadata)
 
@@ -264,7 +264,7 @@ pub fn clear_local_cache(archive_type: Option<&ArchiveType>) -> Result {
             let mut daily_directory = archive_metadata.full_path.clone();
             daily_directory.pop();
 
-            let is_empty = !::std::fs::read_dir(&daily_directory)?.any(|_x| true);
+            let is_empty = !::std::fs::read_dir(&daily_directory)?.has_any();
 
             if is_empty {
 

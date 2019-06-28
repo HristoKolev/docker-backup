@@ -2,7 +2,6 @@ use serde_json::json;
 use handlebars::Handlebars;
 
 use super::email;
-use super::app_config;
 use super::prelude::*;
 use crate::global::logger;
 use crate::archive_type::ArchiveType;

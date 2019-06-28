@@ -53,7 +53,7 @@ fn create_command_options() -> Result<CreateCommandOptions> {
     }
 
     let archive_type_string = matches.value_of(ARCHIVE_TYPE_VALUE)
-        .ok_or_else(|| CustomError::from_message(&format!("No value for: {}", ARCHIVE_TYPE_VALUE)))?;
+        .or_error(&format!("No value for: {}", ARCHIVE_TYPE_VALUE))?;
 
     let archive_type = parse_archive_type(archive_type_string)?;
 
