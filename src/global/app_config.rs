@@ -46,6 +46,7 @@ pub struct DirectoryConfig {
 pub struct KvmMachineConfig {
     pub vm_name: String,
     pub device_name: String,
+    pub restore_directory: String,
     pub archive_config: Option<ArchiveConfig>,
     pub remote_config: Option<Vec<RemoteConfig>>,
 }

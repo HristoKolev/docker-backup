@@ -6,7 +6,7 @@ use std::io::{BufReader, Write, BufRead};
 use super::prelude::*;
 use crate::global::logger;
 
-pub fn exec(command: &str) -> Result<CommandResult> {
+fn exec_internal(command: &str, log_output: bool) -> Result<CommandResult> {
 
     let mut process = Command::new("/usr/bin/env")
         .arg("bash")
@@ -16,12 +16,10 @@ pub fn exec(command: &str) -> Result<CommandResult> {
         .spawn()?;
 
     let stdout = process.stdout.take().or_error("stdout was not redirected.")?;
-
     let stderr = process.stderr.take().or_error("stderr was not redirected.")?;
-
     let stdin = process.stdin.as_mut().or_error("stdin was not redirected.")?;
 
-    let stdout_thread : JoinHandle<Result<String>> = thread::spawn(|| {
+    let stdout_thread : JoinHandle<Result<String>> = thread::spawn(move || {
 
         let buff = BufReader::new(stdout);
 
@@ -31,13 +29,16 @@ pub fn exec(command: &str) -> Result<CommandResult> {
 
             let line = line_result?;
             result.push_str(&format!("{}\n", line));
-            logger().log(&format!("OUT | {}", line))?;
+
+            if log_output {
+                logger().log(&format!("OUT | {}", line))?;
+            }
         }
 
         Ok(result)
     });
 
-    let stderr_thread : JoinHandle<Result<String>> = thread::spawn(|| {
+    let stderr_thread : JoinHandle<Result<String>> = thread::spawn(move || {
 
         let buff = BufReader::new(stderr);
 
@@ -47,6 +48,7 @@ pub fn exec(command: &str) -> Result<CommandResult> {
 
             let line = line_result?;
             result.push_str(&format!("{}\n", line));
+
             logger().log(&format!("ERR | {}", line))?;
         }
 
@@ -73,6 +75,17 @@ pub fn exec(command: &str) -> Result<CommandResult> {
         command: command.to_string()
     });
 }
+
+pub fn exec(command: &str) -> Result<CommandResult> {
+
+    exec_internal(command, true)
+}
+
+pub fn exec_without_log(command: &str) -> Result<CommandResult> {
+
+    exec_internal(command, false)
+}
+
 
 #[derive(Debug)]
 pub struct CommandResult {
@@ -105,5 +118,15 @@ macro_rules! bash_exec {
     };
     ($($x:expr),*) => {
         crate::global::bash_shell::exec(&format!($($x,)*))?.as_result()?
+    };
+}
+
+#[allow(unused_macros)]
+macro_rules! bash_exec_no_log {
+    ($x:expr) => {
+        crate::global::bash_shell::exec_without_log(&format!("{}", $x))?.as_result()?
+    };
+    ($($x:expr),*) => {
+        crate::global::bash_shell::exec_without_log(&format!($($x,)*))?.as_result()?
     };
 }

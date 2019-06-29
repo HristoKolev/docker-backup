@@ -99,7 +99,7 @@ pub fn create_archive<F>(options: CreateArchiveOptions, func: F) -> Result<Archi
             .get_as_string()?;
 
         bash_exec!(
-            "cd {0} && tar -cf {1} --use-compress-program=pigz .",
+            "cd {} && rar a -m5 -ow -t {} ./",
             uncompressed,
             compressed
         );
@@ -302,7 +302,11 @@ pub fn unpack_archive(options: UnpackArchiveOptions) -> Result {
 
         let out_path = options.out_path.get_as_string()?;
 
-        bash_exec!("mkdir -p {0} && cd {0} && tar -xf {1} --use-compress-program=pigz", &out_path, &compressed);
+        bash_exec!(
+            "mkdir -p {0} && cd {0} && unrar e {1} ./",
+            &out_path,
+            &compressed
+        );
 
         Ok(())
 

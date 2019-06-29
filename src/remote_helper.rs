@@ -69,7 +69,7 @@ pub fn list_remote_archives(archive_type: Option<&ArchiveType>) ->  Result<Vec<R
 
         for remote_config  in remote_configs {
 
-            let response = bash_exec!(
+            let response = bash_exec_no_log!(
                 "rclone lsjson {}:{}/",
                 remote_config.remote_name,
                 remote_config.remote_path

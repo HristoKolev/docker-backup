@@ -181,15 +181,15 @@ impl CustomSentryClient {
                 }))
             });
 
-        if let Some (os) = utils::os_context(){
+        if let Some (os) = utils::os_context() {
             event.contexts.insert("os".to_string(), os);
         }
 
-        if let Some (rust) = utils::rust_context(){
+        if let Some (rust) = utils::rust_context() {
             event.contexts.insert("rust".to_string(), rust);
         }
 
-        if let Some (device) = utils::device_context(){
+        if let Some (device) = utils::device_context() {
             event.contexts.insert("device".to_string(), device);
         }
 

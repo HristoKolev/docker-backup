@@ -1,15 +1,16 @@
-use clap::{App, ArgMatches};
-use std::ffi::OsString;
-
-use crate::global::prelude::*;
 use std::sync::Mutex;
 use std::collections::HashMap;
+
+use clap::{App, ArgMatches};
+
+use crate::global::prelude::*;
 
 pub struct CliRunner {
     pub command_map: Mutex<HashMap<String, Box<(Fn() -> Result + Send + Sync)>>>,
 }
 
 impl CliRunner {
+
     pub fn new() -> CliRunner {
         CliRunner {
             command_map: Mutex::new(HashMap::new())
@@ -50,11 +51,6 @@ impl CliRunner {
 
     pub fn run(&self) -> Result {
 
-        let command_name = ::std::env::args_os()
-            .skip(1).take(1)
-            .collect::<Vec<OsString>>().get(0)
-            .map(|x| x.get_as_string());
-
         let command_map = self.command_map.lock()?;
 
         let available_commands = command_map.iter()
@@ -66,7 +62,13 @@ impl CliRunner {
             "Please provide a valid command. Available commands: {}", available_commands.join(", ")
         ));
 
-        let command_name = command_name.map(|x | x.map(|y| y.to_lowercase()))
+        let command_name = ::std::env::args_os()
+            .skip(1)
+            .take(1)
+            .collect_vec()
+            .get(0)
+            .map(|x| x.get_as_string())
+            .map(|x | x.map(|y| y.to_lowercase()))
             .ok_or_else(invalid_command_error)??;
 
         let command = command_map.get(&command_name)
