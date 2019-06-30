@@ -22,7 +22,7 @@ pub fn restore_directory_archive(config_name: &str, _work_path: &str, compressed
     bash_exec!("rm {0} -rf && mkdir -p {0}", &config.directory_path);
 
     bash_exec!(
-        "cd {} && unrar e {} ./",
+        "cd {} && unrar x -idq {} ./",
         &config.directory_path,
         &compressed
     );

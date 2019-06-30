@@ -46,7 +46,7 @@ pub struct DirectoryConfig {
 pub struct KvmMachineConfig {
     pub vm_name: String,
     pub device_name: String,
-    pub restore_directory: String,
+    pub restore_image_path: String,
     pub archive_config: Option<ArchiveConfig>,
     pub remote_config: Option<Vec<RemoteConfig>>,
 }
@@ -65,6 +65,6 @@ pub struct AppConfig {
 
 pub fn read_config(file_path: &str) -> Result<AppConfig> {
     let json_content = ::std::fs::read_to_string(file_path)?;
-    let materialized = serde_json::from_str(&json_content)?;
+    let materialized = ::serde_json::from_str(&json_content)?;
     Ok(materialized)
 }

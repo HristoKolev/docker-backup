@@ -81,10 +81,11 @@ fn create_global_result() -> Result<Global> {
 
 lazy_static! {
     /// The hidden instance reference.
-    static ref INSTANCE: Global = create_global();
+    static ref GLOBAL_INSTANCE: Global = create_global();
 }
 
 fn set_panic_hook () {
+
     ::std::panic::set_hook(Box::new(|info| {
 
         let backtrace = backtrace::Backtrace::new();
@@ -112,38 +113,38 @@ pub fn initialize() {
 
     set_panic_hook();
 
-    lazy_static::initialize(&INSTANCE)
+    lazy_static::initialize(&GLOBAL_INSTANCE)
 }
 
 /// Returns a static reference of the app config.
 #[allow(unused)]
 pub fn app_config() -> &'static AppConfig {
 
-    &INSTANCE.app_config
+    &GLOBAL_INSTANCE.app_config
 }
 
 #[allow(unused)]
 pub fn sentry_client() -> &'static CustomSentryClient {
 
-    &INSTANCE.sentry
+    &GLOBAL_INSTANCE.sentry
 }
 
 #[allow(unused)]
 pub fn logger() -> &'static Logger {
 
-    &INSTANCE.logger
+    &GLOBAL_INSTANCE.logger
 }
 
 #[allow(unused)]
 pub fn app_start_time() -> &'static DateTime<Utc> {
 
-    &INSTANCE.app_start_time
+    &GLOBAL_INSTANCE.app_start_time
 }
 
 #[allow(unused)]
 pub fn cli() -> &'static CliRunner {
 
-    &INSTANCE.cli
+    &GLOBAL_INSTANCE.cli
 }
 
 #[allow(unused_macros)]

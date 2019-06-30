@@ -15,9 +15,14 @@ fn exec_internal(command: &str, log_output: bool) -> Result<CommandResult> {
         .stdin(Stdio::piped())
         .spawn()?;
 
-    let stdout = process.stdout.take().or_error("stdout was not redirected.")?;
-    let stderr = process.stderr.take().or_error("stderr was not redirected.")?;
-    let stdin = process.stdin.as_mut().or_error("stdin was not redirected.")?;
+    let stdout = process.stdout.take()
+        .or_error("stdout was not redirected.")?;
+
+    let stderr = process.stderr.take()
+        .or_error("stderr was not redirected.")?;
+
+    let stdin = process.stdin.as_mut()
+        .or_error("stdin was not redirected.")?;
 
     let stdout_thread : JoinHandle<Result<String>> = thread::spawn(move || {
 
@@ -59,11 +64,11 @@ fn exec_internal(command: &str, log_output: bool) -> Result<CommandResult> {
     stdin.write_all(format!("{}\n", command).as_bytes())?;
     stdin.write_all("exit $?;\n".as_bytes())?;
 
-    let out_result = stdout_thread.join().replace_error(||
-            CustomError::from_message("The stdout thread failed for some reason."))??;
+    let out_result = stdout_thread.join()
+        .on_error("The stdout thread failed for some reason.")??;
 
-    let err_result = stderr_thread.join().replace_error(||
-        CustomError::from_message("The stderr thread failed for some reason."))??;
+    let err_result = stderr_thread.join()
+        .on_error("The stderr thread failed for some reason.")??;
 
     let exit_status = process.wait()?;
 

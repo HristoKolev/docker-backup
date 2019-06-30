@@ -95,11 +95,11 @@ pub fn create_archive<F>(options: CreateArchiveOptions, func: F) -> Result<Archi
         func(&options.archive_type.get_config_name(), &uncompressed)?;
 
         let compressed = work_path
-            .join("compressed-archive.tar.gz")
+            .join("compressed-archive.rar")
             .get_as_string()?;
 
         bash_exec!(
-            "cd {} && rar a -m5 -ow -t {} ./",
+            "cd {} && rar a -m5 -ma5 -ow -ol -t -r -idq {} ./",
             uncompressed,
             compressed
         );
@@ -155,7 +155,7 @@ pub fn restore_archive<F>(options: RestoreArchiveOptions, func: F) -> Result
         let encrypted = options.file_path.get_as_string()?;
 
         let compressed = work_path
-            .join("compressed-archive.tar.gz")
+            .join("compressed-archive.rar")
             .get_as_string()?;
 
         if options.no_decryption {
@@ -269,7 +269,8 @@ pub fn clear_local_cache(archive_type: Option<&ArchiveType>) -> Result {
             if is_empty {
 
                 log!("Deleting daily folder `{}` ...", daily_directory.get_as_string()?);
-                ::std::fs::remove_dir(daily_directory)?;
+
+                ::std::fs::remove_dir(&daily_directory)?;
             }
         }
     }
@@ -291,7 +292,7 @@ pub fn unpack_archive(options: UnpackArchiveOptions) -> Result {
         let encrypted = options.file_path.get_as_string()?;
 
         let compressed = work_path
-            .join("compressed-archive.tar.gz")
+            .join("compressed-archive.rar")
             .get_as_string()?;
 
         if options.no_decryption {
@@ -303,7 +304,7 @@ pub fn unpack_archive(options: UnpackArchiveOptions) -> Result {
         let out_path = options.out_path.get_as_string()?;
 
         bash_exec!(
-            "mkdir -p {0} && cd {0} && unrar e {1} ./",
+            "mkdir -p {0} && cd {0} && unrar x -idq {1} ./",
             &out_path,
             &compressed
         );

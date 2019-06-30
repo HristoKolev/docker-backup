@@ -1,20 +1,13 @@
 use std::path::Path;
 
 use roxmltree::Document;
-use serde::{Serialize, Deserialize};
 
 use crate::global::prelude::*;
 
-static MANIFEST_FILE_NAME: &str = "xdxd-manifest.json";
 static VM_XML_DEFINITION_FILE_NAME: &str = "machine.xml";
 static SNAPSHOT_NAME: &str = "backup-snapshot";
 static SNAPSHOT_FILE_NAME: &str = "snapshot.qcow2";
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct KvmMachineManifest {
-
-    disk_file_name: String,
-}
+static IMAGE_FILE_NAME: &str = "image.qcow2";
 
 pub fn create_kvm_machine_archive(config_name: &str, work_path: &str) -> Result {
 
@@ -26,27 +19,14 @@ pub fn create_kvm_machine_archive(config_name: &str, work_path: &str) -> Result 
 
     let disk_path = get_disk_path(&vm_xml, &config.device_name)?;
 
-    let disk_file_name = Path::new(&disk_path).file_name_as_string()?;
-
     let snapshot_path = Path::new(work_path)
         .join(SNAPSHOT_FILE_NAME).get_as_string()?;
 
     let image_file_name = Path::new(work_path)
-        .join(&disk_file_name).get_as_string()?;
+        .join(IMAGE_FILE_NAME).get_as_string()?;
 
     let xml_file_name = Path::new(work_path)
         .join(VM_XML_DEFINITION_FILE_NAME).get_as_string()?;
-
-    let manifest_file_path = Path::new(work_path)
-        .join(MANIFEST_FILE_NAME).get_as_string()?;
-
-    let manifest = KvmMachineManifest {
-        disk_file_name: disk_file_name.to_string()
-    };
-
-    let manifest_json = serde_json::to_string_pretty(&manifest)?;
-
-    ::std::fs::write(manifest_file_path, manifest_json)?;
 
     do_try::run(|| {
 
@@ -60,8 +40,8 @@ pub fn create_kvm_machine_archive(config_name: &str, work_path: &str) -> Result 
             &snapshot_path
         );
 
-        bash_exec!("qemu-img convert -O qcow2 {} {}", &disk_path, &image_file_name);
-        bash_exec!("qemu-img check {}", &image_file_name);
+        bash_exec!("qemu-img convert -O qcow2 {} {}", &disk_path, image_file_name);
+        bash_exec!("qemu-img check {}", image_file_name);
 
         Ok(())
 
@@ -118,14 +98,25 @@ pub fn restore_kvm_machine_archive(config_name: &str, _work_path: &str, compress
         .and_then(|x| x.get(config_name).cloned())
         .or_error("`KvmMachine` archiving is not configured.")?;
 
-    
+    let temp_xml_file_path = format!("/tmp/{}.xml", ::uuid::Uuid::new_v4().to_string());
 
     bash_exec!(
-        "mkdir -p {0} && cd {0} && unrar e {1} ./",
-        &config.restore_directory,
-        &compressed
+        "unrar p -inul {} {} > {}",
+        &compressed,
+        IMAGE_FILE_NAME,
+        &config.restore_image_path
     );
 
+    bash_exec!(
+        "unrar p -inul {} {} > {}",
+        &compressed,
+        VM_XML_DEFINITION_FILE_NAME,
+        &temp_xml_file_path
+    );
+
+    bash_exec!("virsh define {}", &temp_xml_file_path);
+
+    bash_exec!("rm {} -f", &temp_xml_file_path);
 
     Ok(())
 }

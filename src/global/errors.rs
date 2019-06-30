@@ -213,16 +213,25 @@ impl From<roxmltree::Error> for CustomError {
 pub type Result<T = ()> = std::result::Result<T, CustomError>;
 
 pub trait ResultExtensionsReplaceError<R> {
+
     fn replace_error<ErrFunc>(self, err_func: ErrFunc) -> Result<R>
         where ErrFunc: FnOnce() -> CustomError;
+
+    fn on_error(self, msg: &str) -> Result<R>;
 }
 
 impl<R, E> ResultExtensionsReplaceError<R> for std::result::Result<R, E> {
+
     fn replace_error<ErrFunc>(self, err_func: ErrFunc) -> Result<R>
         where ErrFunc: FnOnce() -> CustomError {
         match self {
             Ok(res) => Ok(res),
             Err(_) => Err(err_func())
         }
+    }
+
+    fn on_error(self, msg: &str) -> Result<R> {
+
+       self.replace_error(|| CustomError::from_message(msg))
     }
 }
