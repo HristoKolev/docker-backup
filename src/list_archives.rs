@@ -42,13 +42,28 @@ pub fn list_archive_command() -> Result {
         .rev()
         .collect_vec();
 
-    for item in list {
-        log!(
-            "{} | {} | {}",
-            item.full_path.file_name_as_string()?,
-            item.archive_type.to_string(),
-            item.archive_date.format("%Y-%m-%d %H:%M:%S").to_string()
-        );
+    if list.len() > 0 {
+
+        let max_file_name_length = (&list).into_iter()
+            .map_result(|x| x.full_path.file_name_as_string())?
+            .order_by_desc(|x| x.len())
+            .first().map(|x| x.len())
+            .or_error("The Vec does not have any elements.")?;
+
+        let archive_length_length = (&list).into_iter()
+            .map(|x| x.archive_type.to_string())
+            .order_by_desc(|x| x.len())
+            .first().map(|x| x.len())
+            .or_error("The Vec does not have any elements.")?;
+
+        for item in &list {
+            log!(
+                "{} | {} | {}",
+                item.full_path.file_name_as_string()?.pad_right(max_file_name_length, ' '),
+                item.archive_type.to_string().pad_right(archive_length_length, ' '),
+                item.archive_date.format("%Y-%m-%d %H:%M:%S").to_string()
+            );
+        }
     }
 
     Ok(())

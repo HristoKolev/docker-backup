@@ -5,12 +5,15 @@ use std::ffi::OsStr;
 use std::collections::HashMap;
 use std::hash::Hash;
 
-pub trait StrExtensions {
-    fn last_index_of(&self, c: char) -> Option<usize>;
+pub trait StringExtensions {
+    fn last_index_of(self, c: char) -> Option<usize>;
+    fn pad_left(self, pad: usize, c: char) -> String;
+    fn pad_right(self, pad: usize, c: char) -> String;
 }
 
-impl StrExtensions for &str {
-    fn last_index_of(&self, c: char) -> Option<usize> {
+impl StringExtensions for &str {
+
+    fn last_index_of(self, c: char) -> Option<usize> {
 
         let mut i = self.len() - 1;
 
@@ -26,6 +29,59 @@ impl StrExtensions for &str {
         }
 
         None
+    }
+
+    fn pad_left(self, pad: usize, c: char) -> String {
+
+        let mut result = String::new();
+
+        let len = self.len();
+
+        if pad > len {
+
+            for _ in 0..pad-len {
+
+                result.push(c);
+            }
+        }
+
+        result.push_str(self);
+
+        result
+    }
+
+    fn pad_right(self, pad: usize, c: char) -> String {
+
+        let mut result = String::new();
+
+        let len = self.len();
+
+        result.push_str(self);
+
+        if pad > len {
+
+            for _ in 0..pad-len {
+
+                result.push(c);
+            }
+        }
+
+        result
+    }
+}
+
+impl StringExtensions for String {
+
+    fn last_index_of(self, c: char) -> Option<usize> {
+        self.as_str().last_index_of(c)
+    }
+
+    fn pad_left(self, pad: usize, c: char) -> String {
+        self.as_str().pad_left(pad, c)
+    }
+
+    fn pad_right(self, pad: usize, c: char) -> String {
+        self.as_str().pad_right(pad, c)
     }
 }
 
