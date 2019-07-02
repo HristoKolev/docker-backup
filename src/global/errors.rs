@@ -16,6 +16,7 @@ pub enum CustomErrorKind {
     ReqwestError(reqwest::Error),
     SystemTimeError(std::time::SystemTimeError),
     SmtpError(lettre::smtp::error::Error),
+    LettreEmailError(lettre_email::error::Error),
     Failure(failure::Error),
     HandlebarsError(handlebars::TemplateRenderError),
     UserError(String),
@@ -45,6 +46,7 @@ impl fmt::Debug for CustomErrorKind {
             HandlebarsError(err) => return err.fmt(f),
             UserError(err) => return err.fmt(f),
             XmlError(err) => return err.fmt(f),
+            LettreEmailError(err) => return err.fmt(f),
         };
     }
 }
@@ -66,6 +68,7 @@ impl ToString for CustomErrorKind {
             HandlebarsError(err) => return err.to_string(),
             UserError(err) => return err.to_string(),
             XmlError(err) => return err.to_string(),
+            LettreEmailError(err) => return err.to_string(),
         }
     }
 }
@@ -178,6 +181,15 @@ impl From<lettre::smtp::error::Error> for CustomError {
     fn from(err: lettre::smtp::error::Error) -> Self {
         CustomError {
             kind: SmtpError(err),
+            backtrace: Backtrace::new(),
+        }
+    }
+}
+
+impl From<lettre_email::error::Error> for CustomError {
+    fn from(err: lettre_email::error::Error) -> Self {
+        CustomError {
+            kind: LettreEmailError(err),
             backtrace: Backtrace::new(),
         }
     }
