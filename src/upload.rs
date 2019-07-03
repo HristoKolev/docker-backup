@@ -73,7 +73,8 @@ pub fn upload_command() -> Result {
     Ok(())
 }
 
-fn process_remote(local_archives: &Vec<ArchiveMetadata>,
+fn process_remote(
+    local_archives: &Vec<ArchiveMetadata>,
     remote_archives: &Vec<RemoteArchiveMetadata>,
     remote_config: &RemoteConfig) -> Result {
 

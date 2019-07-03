@@ -8,7 +8,11 @@ pub fn create_directory_archive(config_name: &str, work_path: &str) -> Result {
 
     bash_exec!("mkdir -p {0}", &config.directory_path);
 
-    bash_exec!(r##"rsync -a --delete --filter="dir-merge,- .backupignore" {}/ {}/"##, &config.directory_path, work_path);
+    bash_exec!(
+        r##"rsync -a --delete --filter="dir-merge,- .backupignore" {}/ {}/"##,
+        &config.directory_path,
+        work_path
+    );
 
     Ok(())
 }
@@ -21,11 +25,7 @@ pub fn restore_directory_archive(config_name: &str, _work_path: &str, compressed
 
     bash_exec!("rm {0} -rf && mkdir -p {0}", &config.directory_path);
 
-    bash_exec!(
-        "cd {} && unrar x -idq {} ./",
-        &config.directory_path,
-        &compressed
-    );
+    bash_exec!("cd {} && unrar x -idq {} ./", &config.directory_path, &compressed);
 
     Ok(())
 }

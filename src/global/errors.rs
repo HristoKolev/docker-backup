@@ -222,7 +222,7 @@ impl From<roxmltree::Error> for CustomError {
     }
 }
 
-pub type Result<T = ()> = std::result::Result<T, CustomError>;
+pub type Result<T = ()> = ::std::result::Result<T, CustomError>;
 
 pub trait ResultExtensionsReplaceError<R> {
 

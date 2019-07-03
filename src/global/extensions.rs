@@ -1,9 +1,9 @@
 use std::path::{Path, PathBuf};
-
-use super::prelude::*;
-use std::ffi::OsStr;
+use std::ffi::{OsStr, OsString};
 use std::collections::HashMap;
 use std::hash::Hash;
+
+use super::prelude::*;
 
 pub trait StringExtensions {
     fn last_index_of(self, c: char) -> Option<usize>;
@@ -85,11 +85,23 @@ impl StringExtensions for String {
     }
 }
 
-pub trait OsStrExtensions {
+pub trait OsStringExtensions {
+
     fn get_as_string(&self) -> Result<String>;
 }
 
-impl OsStrExtensions for OsStr {
+impl OsStringExtensions for OsStr {
+
+    fn get_as_string(&self) -> Result<String> {
+
+        Ok(self.to_str()
+            .or_error("The OsStr cannot be converted to &str because it is not valid.")
+            ?.to_string())
+    }
+}
+
+impl OsStringExtensions for OsString {
+
     fn get_as_string(&self) -> Result<String> {
 
         Ok(self.to_str()
@@ -189,7 +201,7 @@ impl<T> OptionExtensions<T> for Option<T> {
 
     fn or_error(self, msg: &str) -> Result<T> {
 
-        self.ok_or_else(||  CustomError::from_message(msg))
+        self.ok_or_else(|| CustomError::from_message(msg))
     }
 }
 

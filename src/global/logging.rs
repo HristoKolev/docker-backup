@@ -65,7 +65,7 @@ impl FileAppender {
 
         state.file_handle.sync_all()?;
 
-        std::fs::rename(&self.config.file_path, new_path)?;
+        ::std::fs::rename(&self.config.file_path, new_path)?;
 
         let file_handle = FileAppender::create_file_handle(&self.config.file_path)?;
 

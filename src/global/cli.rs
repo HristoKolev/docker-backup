@@ -5,8 +5,10 @@ use clap::{App, ArgMatches};
 
 use crate::global::prelude::*;
 
+pub type CommandFunc = Box<Fn() -> Result + Send + Sync>;
+
 pub struct CliRunner {
-    pub command_map: Mutex<HashMap<String, Box<(Fn() -> Result + Send + Sync)>>>,
+    pub command_map: Mutex<HashMap<String, CommandFunc>>,
 }
 
 impl CliRunner {
@@ -40,11 +42,11 @@ impl CliRunner {
         matches.get_matches_from(args)
     }
 
-    pub fn register_command<F>(&self, command_name: &str, func: F) -> Result
-        where F: Fn() -> Result + Send + Sync, F: 'static {
+    pub fn register_command(&self, command_name: &str, func: CommandFunc) -> Result {
 
         let mut map = self.command_map.lock()?;
-        map.insert(command_name.to_string(), Box::new(func));
+
+        map.insert(command_name.to_string(), func);
 
         Ok(())
     }

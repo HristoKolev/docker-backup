@@ -43,7 +43,9 @@ pub struct Global {
 /// In case of an error handles it
 /// and exits the process with code 1.
 fn create_global() -> Global {
-    create_global_result().crash_on_error()
+
+    create_global_result()
+        .crash_on_error()
 }
 
 /// Creates the global object.
@@ -54,7 +56,9 @@ fn create_global_result() -> Result<Global> {
     let config_file_path = config_directory.join(APP_CONFIG_FILE_NAME);
 
     if !config_file_path.exists() {
+
         eprintln!("The `{}` file is missing.", APP_CONFIG_FILE_NAME);
+
         ::std::process::exit(1);
     }
 
@@ -80,6 +84,7 @@ fn create_global_result() -> Result<Global> {
 }
 
 lazy_static! {
+
     /// The hidden instance reference.
     static ref GLOBAL_INSTANCE: Global = create_global();
 }
@@ -116,7 +121,6 @@ pub fn initialize() {
     lazy_static::initialize(&GLOBAL_INSTANCE)
 }
 
-/// Returns a static reference of the app config.
 #[allow(unused)]
 pub fn app_config() -> &'static AppConfig {
 

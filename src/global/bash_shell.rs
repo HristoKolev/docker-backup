@@ -4,7 +4,6 @@ use std::thread;
 use std::io::{BufReader, Write, BufRead};
 
 use super::prelude::*;
-use crate::global::logger;
 
 fn exec_internal(command: &str, log_output: bool) -> Result<CommandResult> {
 

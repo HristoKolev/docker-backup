@@ -107,8 +107,7 @@ pub fn restore_kvm_machine_archive(config_name: &str, _work_path: &str, compress
         &config.restore_image_path
     );
 
-    bash_exec!(
-        "unrar p -inul {} {} > {}",
+    bash_exec!("unrar p -inul {} {} > {}",
         &compressed,
         VM_XML_DEFINITION_FILE_NAME,
         &temp_xml_file_path
