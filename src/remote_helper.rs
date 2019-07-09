@@ -122,7 +122,7 @@ pub fn clear_remote_cache(archive_type: &ArchiveType) -> Result {
 
     let map: HashMap<String, Vec<_>> = archives.into_iter()
         .filter(|x| x.archive_metadata.archive_date < (*app_start_time() - Duration::days(x.remote_config.cache_expiry_days)))
-        .filter(|x| x.archive_metadata.archive_date.day() != 1 && x.archive_metadata.archive_date.day() != 15)
+        .filter(|x| !are_permanent_archives_enabled(x) || !is_permanent(x))
         .order_by(|x| x.archive_metadata.archive_date)
         .group_by(|x| x.remote_config.remote_name.clone())
         .collect();
@@ -153,4 +153,15 @@ pub fn clear_remote_cache(archive_type: &ArchiveType) -> Result {
     }
 
     Ok(())
+}
+
+fn is_permanent(metadata: &RemoteArchiveMetadata) -> bool {
+
+    metadata.archive_metadata.archive_date.day() != 1
+        && metadata.archive_metadata.archive_date.day() != 15
+}
+
+fn are_permanent_archives_enabled(metadata: &RemoteArchiveMetadata) -> bool {
+
+    !metadata.remote_config.disable_permanent_archives.unwrap_or(false)
 }

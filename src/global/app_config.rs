@@ -18,6 +18,7 @@ pub struct RemoteConfig {
     pub remote_path: String,
     pub cache_expiry_days: i64,
     pub min_archive_count: i32,
+    pub disable_permanent_archives: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
