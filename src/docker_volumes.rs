@@ -13,11 +13,11 @@ pub fn create_docker_volumes_archive(config_name: &str, work_path: &str) -> Resu
 
     do_try::run(|| {
 
-        bash_exec!("rsync -a --delete {}/ {}/", config.volumes_path, work_path);
+        copy_files(&config.volumes_path, work_path)?;
 
         bash_exec!("docker pause {}", container_ids);
 
-        bash_exec!("rsync -a --delete {}/ {}/", config.volumes_path, work_path);
+        copy_files(&config.volumes_path, work_path)?;
 
         Ok(())
     }).finally(|| {
@@ -45,4 +45,38 @@ pub fn restore_docker_volumes_archive(config_name: &str, _work_path: &str, compr
     bash_exec!("systemctl start docker");
 
     Ok(())
+}
+
+
+fn copy_files(source: &str, destination: &str) -> Result {
+
+    let mut command_result;
+    let mut i = 0;
+
+    let max_tries = 10;
+
+    loop {
+
+        command_result = bash_shell::exec(
+            &format!("rsync -a --delete {}/ {}/", source, destination)
+        )?;
+
+        match command_result.as_result_ref() {
+            Ok(_) => return Ok(()),
+            Err(err) => {
+
+                if !command_result.stderr.contains("vanished") {
+
+                    return Err(err);
+                }
+
+                if i == max_tries {
+
+                    return Err(CustomError::from_message("The files keep vanishing."))
+                }
+            }
+        }
+
+        i +=1;
+    }
 }

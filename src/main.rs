@@ -1,5 +1,8 @@
 #![forbid(unsafe_code)]
 
+#[link(name="openssl", kind="static")]
+extern crate openssl;
+
 #[macro_use]
 mod global;
 mod archive_helper;

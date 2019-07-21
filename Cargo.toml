@@ -1,6 +1,6 @@
 [package]
 name = "xdxd-backup"
-version = "0.1.10"
+version = "0.1.11"
 authors = ["Hristo Kolev <hristo.a.kolev@gmail.com>"]
 edition = "2018"
 
@@ -36,3 +36,6 @@ strum = "0.15.0"
 strum_macros = "0.15.0"
 
 roxmltree = "0.6.1"
+
+openssl-sys = "0.9"
+openssl = { version = "0.10", features = ["vendored"] }

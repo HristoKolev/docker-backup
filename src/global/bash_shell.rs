@@ -113,6 +113,18 @@ impl CommandResult {
             )))
         }
     }
+
+    //noinspection RsSelfConvention
+    pub fn as_result_ref(&self) -> Result<&CommandResult> {
+        if self.success {
+            Ok(self)
+        } else {
+            Err(CustomError::from_message(&format!(
+                "A command exited with a non 0 exit code or with a signal. '{}'",
+                self.command
+            )))
+        }
+    }
 }
 
 #[allow(unused_macros)]
