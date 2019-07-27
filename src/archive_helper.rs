@@ -99,8 +99,9 @@ pub fn create_archive<F>(options: CreateArchiveOptions, func: F) -> Result<Archi
             .get_as_string()?;
 
         bash_exec!(
-            "cd {} && rar a -m5 -ma5 -ow -ol -t -r -idq {} ./",
+            "cd {} && rar a -m{} -ma5 -ow -ol -t -r -idq {} ./",
             uncompressed,
+            archive_config.rar_compression_level,
             compressed
         );
 

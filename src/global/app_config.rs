@@ -27,6 +27,7 @@ pub struct ArchiveConfig {
     pub temp_path: String,
     pub gpg_key_name: String,
     pub cache_expiry_days: i64,
+    pub rar_compression_level: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

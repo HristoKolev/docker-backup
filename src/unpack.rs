@@ -1,9 +1,9 @@
+use std::path::{Path, PathBuf};
 
 use clap::Arg;
 
 use crate::global::prelude::*;
 use crate::archive_type::*;
-use std::path::{Path, PathBuf};
 use crate::archive_helper::{UnpackArchiveOptions, unpack_archive};
 
 struct UnpackCommandOptions {
