@@ -15,6 +15,7 @@ pub struct CreateArchiveOptions {
     pub file_path: PathBuf,
     pub no_encryption: bool,
     pub archive_type: ArchiveType,
+    pub is_cached_archive: bool,
 }
 
 pub struct RestoreArchiveOptions {
@@ -74,7 +75,7 @@ pub fn read_metadata(path: &Path) -> Result<Option<ArchiveMetadata>> {
     })
 }
 
-pub fn create_archive<F>(options: CreateArchiveOptions, func: F) -> Result<ArchiveMetadata>
+pub fn create_archive<F>(options: CreateArchiveOptions, func: F) -> Result<Option<ArchiveMetadata>>
     where F: FnOnce(&str, &str) -> Result {
 
     let archive_config = get_archive_config(&options.archive_type);
@@ -128,10 +129,15 @@ pub fn create_archive<F>(options: CreateArchiveOptions, func: F) -> Result<Archi
 
         bash_exec!("mv {} {}", &final_archive, &options.file_path.get_as_string()?);
 
-        let metadata = read_metadata(Path::new(&options.file_path))?
-            .or_error("The archiver somehow did not produce a correct archive.")?;
+        if options.is_cached_archive {
 
-        Ok(metadata)
+            let metadata = read_metadata(Path::new(&options.file_path))?
+                .or_error("The archiver somehow did not produce a correct archive.")?;
+
+            Ok(Some(metadata))
+        } else {
+            Ok(None)
+        }
 
     }).finally(|| {
 

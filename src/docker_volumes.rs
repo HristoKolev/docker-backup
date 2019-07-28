@@ -8,7 +8,6 @@ pub fn create_docker_volumes_archive(config_name: &str, work_path: &str) -> Resu
         .or_error("`DockerVolumes` archiving is not configured.")?;
 
     let ps_result = bash_exec!(r##"docker ps --filter="status=running" -q"##);
-
     let container_ids = ps_result.stdout.replace("\n", " ");
 
     do_try::run(|| {

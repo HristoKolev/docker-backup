@@ -74,16 +74,18 @@ pub fn create_archive_command() -> Result {
         no_encryption: options.no_encryption,
         file_path: options.file_path.clone().map(|x| Ok(Path::new(&x).to_path_buf()))
             .unwrap_or_else(|| get_new_archive_path(&options.archive_type))?,
-        archive_type: options.archive_type.clone()
+        archive_type: options.archive_type.clone(),
+        is_cached_archive: options.file_path.is_none()
     };
 
     let func = get_create_archive(&options.archive_type);
 
-    let metadata = create_archive(archive_options, func)?;
+    if let Some(metadata) = create_archive(archive_options, func)? {
 
-    process_remotes(&metadata)?;
+        process_remotes(&metadata)?;
 
-    clear_local_cache(Some(&metadata.archive_type))?;
+        clear_local_cache(Some(&metadata.archive_type))?;
+    }
 
     email_report::send_success_report(&options.archive_type)?;
 
