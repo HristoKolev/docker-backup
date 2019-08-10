@@ -118,6 +118,7 @@ pub trait PathExtensions {
     fn get_directory_as_string(&self) -> Result<String>;
     fn get_directory(&self) -> PathBuf;
     fn create_directory(&self) -> Result<PathBuf>;
+    fn change_extension(&self, new_extension: &str) -> Result<PathBuf>;
 }
 
 impl PathExtensions for Path {
@@ -174,6 +175,17 @@ impl PathExtensions for Path {
         ::std::fs::create_dir_all(copy.get_as_string()?)?;
 
         Ok(copy)
+    }
+
+    fn change_extension(&self, new_extension: &str) -> Result<PathBuf> {
+
+        let mut directory = self.get_directory();
+
+        let file_stem = self.file_stem_as_string()?;
+
+        directory.push(format!("{}.{}", &file_stem, new_extension));
+
+        Ok(directory)
     }
 }
 

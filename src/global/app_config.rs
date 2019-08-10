@@ -47,8 +47,7 @@ pub struct DirectoryConfig {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct KvmMachineConfig {
     pub vm_name: String,
-    pub device_name: String,
-    pub restore_image_path: String,
+    pub device_names: Vec<String>,
     pub archive_config: Option<ArchiveConfig>,
     pub remote_config: Option<Vec<RemoteConfig>>,
 }
