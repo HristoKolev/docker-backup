@@ -102,7 +102,6 @@ pub fn create_kvm_machine_archive(config_name: &str, work_path: &str) -> Result 
         for disk in &selected_disks {
 
             let new_disk_path = Path::new(work_path)
-                .get_directory()
                 .join(Path::new(&disk.file_path).file_name_as_string()?)
                 .get_as_string()?;
 
