@@ -36,7 +36,7 @@ fn get_disks(xml: &str) -> Result<Vec<DiskImage>> {
             .or_error("No `driver` tag found in the `disk` tag.")?;
 
         let disk_format = driver_node.attribute("type")
-            .or_error("No `type` attribute found on the `driver` tag.")?
+            .unwrap_or("raw")
             .to_string();
 
         let target_node = disk_node.children()
