@@ -29,6 +29,7 @@ pub fn handle_fatal_error(error: &CustomError) -> Result {
 pub trait ResultExtensionsCrashOnError<R> {
 
     fn crash_on_error(self) -> R;
+    fn crash_on_early_error(self) -> R;
 }
 
 impl<R> ResultExtensionsCrashOnError<R> for Result<R> {
@@ -38,6 +39,22 @@ impl<R> ResultExtensionsCrashOnError<R> for Result<R> {
         self.unwrap_or_else(|err| {
             handle_fatal_error(&err)
                 .expect(&format!("An error occurred while handling an error. {:#?}", &err));
+
+            ::std::process::exit(1)
+        })
+    }
+
+    // This is called when an error occurs while initializing the global state.
+    // Using the normal error handler to handle the error causes
+    // (initialization -> error -> initialization -> error) cycle because it depends on the state to be initialized,
+    // because the global state is being "lazily" initialized by `lazy_static`.
+    // The easiest way for this to occur is to have invalid json in the config file.
+    // Not being able to access the state leaves me with printing to stderr as the only option for handling the error.
+    fn crash_on_early_error(self) -> R {
+
+        self.unwrap_or_else(|err| {
+
+            eprintln!("{:#?}", err);
 
             ::std::process::exit(1)
         })

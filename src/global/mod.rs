@@ -62,7 +62,8 @@ fn create_global_result() -> Result<Global> {
         ::std::process::exit(1);
     }
 
-    let app_config = read_config(&config_file_path.get_as_string()?)?;
+    let app_config = read_config(&config_file_path.get_as_string()?)
+        .crash_on_early_error();
 
     let sentry = CustomSentryClient::new(&app_config.sentry_dsn)?;
 
