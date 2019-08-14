@@ -39,3 +39,4 @@ roxmltree = "0.6.1"
 
 openssl-sys = "0.9"
 openssl = { version = "0.10", features = ["vendored"] }
+single-instance = "0.1.1"
