@@ -5,7 +5,7 @@ use clap::{App, ArgMatches};
 
 use crate::global::prelude::*;
 
-pub type CommandFunc = Box<Fn() -> Result + Send + Sync>;
+pub type CommandFunc = Box<dyn Fn() -> Result + Send + Sync>;
 
 pub struct CliRunner {
     pub command_map: Mutex<HashMap<String, CommandFunc>>,

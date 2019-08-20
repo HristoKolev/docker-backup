@@ -21,6 +21,8 @@ pub enum CustomErrorKind {
     HandlebarsError(handlebars::TemplateRenderError),
     UserError(String),
     XmlError(roxmltree::Error),
+    SendErrorFile(std::sync::mpsc::SendError<std::fs::File>),
+    RecvError(std::sync::mpsc::RecvError),
 }
 
 #[derive(Debug)]
@@ -47,6 +49,8 @@ impl fmt::Debug for CustomErrorKind {
             UserError(err) => return err.fmt(f),
             XmlError(err) => return err.fmt(f),
             LettreEmailError(err) => return err.fmt(f),
+            SendErrorFile(err) => return err.fmt(f),
+            RecvError(err) => return err.fmt(f),
         };
     }
 }
@@ -69,6 +73,8 @@ impl ToString for CustomErrorKind {
             UserError(err) => return err.to_string(),
             XmlError(err) => return err.to_string(),
             LettreEmailError(err) => return err.to_string(),
+            SendErrorFile(err) => return err.to_string(),
+            RecvError(err) => return err.to_string(),
         }
     }
 }
@@ -95,6 +101,26 @@ impl CustomError {
         }
     }
 }
+
+impl From<std::sync::mpsc::SendError<std::fs::File>> for CustomError {
+    fn from(err: std::sync::mpsc::SendError<std::fs::File>) -> Self {
+        CustomError {
+            kind: SendErrorFile(err),
+            backtrace: Backtrace::new(),
+        }
+    }
+}
+
+
+impl From<std::sync::mpsc::RecvError> for CustomError {
+    fn from(err: std::sync::mpsc::RecvError) -> Self {
+        CustomError {
+            kind: RecvError(err),
+            backtrace: Backtrace::new(),
+        }
+    }
+}
+
 
 impl From<std::io::Error> for CustomError {
     fn from(err: std::io::Error) -> Self {

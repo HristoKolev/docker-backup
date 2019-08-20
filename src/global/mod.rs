@@ -13,6 +13,7 @@ pub mod do_try;
 pub mod email;
 pub mod email_report;
 pub mod cli;
+pub mod file_lock;
 
 use std::path::PathBuf;
 use chrono::{DateTime, Utc};
