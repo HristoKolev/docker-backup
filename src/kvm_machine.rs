@@ -2,6 +2,7 @@ use std::path::Path;
 use roxmltree::Document;
 
 use crate::global::prelude::*;
+use crate::global::file_lock::wait_for_lock;
 
 static VM_XML_DEFINITION_FILE_NAME: &str = "machine.xml";
 static SNAPSHOT_NAME: &str = "backup-snapshot";
@@ -89,6 +90,18 @@ pub fn create_kvm_machine_archive(config_name: &str, work_path: &str) -> Result 
         .map(|x| x.clone())
         .collect_vec();
 
+    // Locking
+    let app_config = app_config();
+
+    let archive_config = config.archive_config.as_ref()
+        .unwrap_or_else(|| &app_config.archive_config);
+
+    let lock_name = &format!("{}/kvm-machine-{}.lock", &archive_config.temp_path, &config.vm_name);
+
+    log!("Acquiring lock - `{}` ...", lock_name);
+    let _lock = wait_for_lock(lock_name);
+    log!("Lock `{}` acquired.", lock_name);
+
     do_try::run(|| {
 
         bash_exec!(
@@ -129,6 +142,9 @@ pub fn create_kvm_machine_archive(config_name: &str, work_path: &str) -> Result 
 
         Ok(())
     })?;
+
+    log!("Waiting for a few secs for libvirt to drop it's locks.");
+    ::std::thread::sleep(::std::time::Duration::from_secs(2));
 
     Ok(())
 }
