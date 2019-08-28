@@ -73,6 +73,18 @@ pub fn create_kvm_machine_archive(config_name: &str, work_path: &str) -> Result 
         .and_then(|x| x.get(config_name).cloned())
         .or_error("`KvmMachine` archiving is not configured.")?;
 
+    // Locking
+    let app_config = app_config();
+
+    let archive_config = config.archive_config.as_ref()
+        .unwrap_or_else(|| &app_config.archive_config);
+
+    let lock_name = &format!("{}/kvm-machine-{}.lock", &archive_config.temp_path, &config.vm_name);
+
+    log!("Acquiring lock - `{}` ...", lock_name);
+    let _lock = wait_for_lock(lock_name);
+    log!("Lock `{}` acquired.", lock_name);
+
     let vm_xml = bash_exec_no_log!("virsh dumpxml {}", &config.vm_name).stdout;
 
     let disks = get_disks(&vm_xml)?;
@@ -89,18 +101,6 @@ pub fn create_kvm_machine_archive(config_name: &str, work_path: &str) -> Result 
         .filter(|x| config.device_names.contains(&x.device_name))
         .map(|x| x.clone())
         .collect_vec();
-
-    // Locking
-    let app_config = app_config();
-
-    let archive_config = config.archive_config.as_ref()
-        .unwrap_or_else(|| &app_config.archive_config);
-
-    let lock_name = &format!("{}/kvm-machine-{}.lock", &archive_config.temp_path, &config.vm_name);
-
-    log!("Acquiring lock - `{}` ...", lock_name);
-    let _lock = wait_for_lock(lock_name);
-    log!("Lock `{}` acquired.", lock_name);
 
     do_try::run(|| {
 
@@ -142,9 +142,6 @@ pub fn create_kvm_machine_archive(config_name: &str, work_path: &str) -> Result 
 
         Ok(())
     })?;
-
-    log!("Waiting for a few secs for libvirt to drop it's locks.");
-    ::std::thread::sleep(::std::time::Duration::from_secs(2));
 
     Ok(())
 }
