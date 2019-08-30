@@ -57,7 +57,11 @@ fn copy_files(source: &str, destination: &str) -> Result {
     loop {
 
         command_result = bash_shell::exec(
-            &format!("rsync -a --delete {}/ {}/", source, destination)
+            &format!(
+                r##"rsync -a --delete --filter="dir-merge,- .backupignore" {}/ {}/"##,
+                source,
+                destination
+            )
         )?;
 
         match command_result.as_result_ref() {
