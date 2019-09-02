@@ -32,6 +32,10 @@ fn get_disks(xml: &str) -> Result<Vec<DiskImage>> {
             .or_error("No `device` attribute found on the `disk` tag.")?
             .to_string();
 
+        if disk_device != "disk" {
+            continue;
+        }
+
         let driver_node = disk_node.children()
             .filter_first(|x| x.has_tag_name("driver"))
             .or_error("No `driver` tag found in the `disk` tag.")?;
@@ -88,6 +92,11 @@ pub fn create_kvm_machine_archive(config_name: &str, work_path: &str) -> Result 
     let vm_xml = bash_exec_no_log!("virsh dumpxml {}", &config.vm_name).stdout;
 
     let disks = get_disks(&vm_xml)?;
+
+    if disks.len() == 0 {
+
+        return Err(CustomError::from_message("No compatible disks detected."));
+    }
 
     let xml_file_name = Path::new(work_path)
         .join(VM_XML_DEFINITION_FILE_NAME).get_as_string()?;

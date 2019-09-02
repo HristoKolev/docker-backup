@@ -1,11 +1,23 @@
 use crate::global::prelude::*;
 use crate::global::{do_try};
+use crate::global::file_lock::wait_for_lock;
 
 pub fn create_docker_volumes_archive(config_name: &str, work_path: &str) -> Result {
 
     let config = app_config().docker_config.as_ref()
         .and_then(|x| x.get(config_name).cloned())
         .or_error("`DockerVolumes` archiving is not configured.")?;
+
+    let app_config = app_config();
+
+    let archive_config = config.archive_config.as_ref()
+        .unwrap_or_else(|| &app_config.archive_config);
+
+    let lock_name = &format!("{}/docker-volumes.lock", &archive_config.temp_path);
+
+    log!("Acquiring lock - `{}` ...", lock_name);
+    let _lock = wait_for_lock(lock_name);
+    log!("Lock `{}` acquired.", lock_name);
 
     let ps_result = bash_exec!(r##"docker ps --filter="status=running" -q"##);
     let container_ids = ps_result.stdout.replace("\n", " ");
