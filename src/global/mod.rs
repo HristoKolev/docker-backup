@@ -15,7 +15,7 @@ pub mod email_report;
 pub mod cli;
 pub mod file_lock;
 
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 use chrono::{DateTime, Utc};
 use lazy_static::lazy_static;
 
@@ -52,7 +52,10 @@ fn create_global() -> Global {
 /// Creates the global object.
 fn create_global_result() -> Result<Global> {
 
-    let config_directory = std::env::current_exe()?.get_directory();
+    let config_directory= ::std::env::var_os("CONFIG_DIRECTORY")
+        .map_result(|x| Ok(x.get_as_string()?))?
+        .map(|x| Path::new(&x).to_path_buf())
+        .unwrap_or_else_result(|| Ok(::std::env::current_exe()?.get_directory()))?;
 
     let config_file_path = config_directory.join(APP_CONFIG_FILE_NAME);
 

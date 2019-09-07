@@ -193,6 +193,7 @@ pub trait OptionExtensions<T> {
     fn map<U, F: FnOnce(&T) -> U>(&self, f: F) -> Option<U>;
     fn map_result<U, F: FnOnce(&T) -> Result<U>>(&self, f: F) -> Result<Option<U>>;
     fn or_error(self, error_message: &str) -> Result<T>;
+    fn unwrap_or_else_result<F: FnOnce() -> Result<T>>(self, f: F) -> Result<T>;
 }
 
 impl<T> OptionExtensions<T> for Option<T> {
@@ -215,7 +216,32 @@ impl<T> OptionExtensions<T> for Option<T> {
 
         self.ok_or_else(|| CustomError::from_message(msg))
     }
+
+    fn unwrap_or_else_result<F: FnOnce() -> Result<T>>(self, f: F) -> Result<T> {
+        match self {
+            Some(x) => Ok(x),
+            None => f(),
+        }
+    }
 }
+
+pub trait ResultExtensions<T>{
+
+    fn map_result<U, F: FnOnce(&T) -> Result<U>>(self, f: F) -> Result<U>;
+}
+
+impl<T> ResultExtensions<T> for Result<T> {
+
+
+    fn map_result<U, F: FnOnce(&T) -> Result<U>>(self, f: F) -> Result<U> {
+        match self {
+            Ok(x) => Ok(f(&x)?),
+            Err(err) => Err(err),
+        }
+    }
+
+}
+
 
 pub trait IteratorExtensions: Iterator {
 
