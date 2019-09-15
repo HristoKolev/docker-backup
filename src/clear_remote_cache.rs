@@ -12,7 +12,7 @@ fn clear_remote_cache_command_options() -> Result<ClearRemoteCacheCommandOptions
 
     const ARCHIVE_TYPE_VALUE: &str = "archive-type";
 
-    let matches =  cli().command_config(|x| {
+    let matches = cli().command_config(|x| {
 
         x.arg(Arg::with_name(ARCHIVE_TYPE_VALUE)
             .short("t")

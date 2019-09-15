@@ -19,6 +19,7 @@ mod config;
 mod unpack;
 mod directory_archive;
 mod kvm_machine;
+mod remote_list_command;
 
 use crate::global::prelude::*;
 use crate::global::errors::CustomErrorKind;
@@ -31,6 +32,7 @@ use crate::clear_remote_cache::clear_remote_cache_command;
 use crate::restore_archive::restore_archive_command;
 use crate::config::config_command;
 use crate::unpack::unpack_archive_command;
+use crate::remote_list_command::remote_list_archive_command;
 
 fn main() {
 
@@ -46,6 +48,7 @@ fn main_result() -> Result {
     cli().register_command("clear-cache", Box::new(clear_cache_command))?;
     cli().register_command("upload", Box::new(upload_command))?;
     cli().register_command("clear-remote-cache", Box::new(clear_remote_cache_command))?;
+    cli().register_command("remote-list", Box::new(remote_list_archive_command))?;
     cli().register_command("restore", Box::new(restore_archive_command))?;
     cli().register_command("unpack", Box::new(unpack_archive_command))?;
     cli().register_command("config", Box::new(config_command))?;
