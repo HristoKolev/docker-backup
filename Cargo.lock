@@ -1904,7 +1904,7 @@ dependencies = [
 
 [[package]]
 name = "xdxd-backup"
-version = "0.1.17"
+version = "0.1.18"
 dependencies = [
  "backtrace 0.3.34 (registry+https://github.com/rust-lang/crates.io-index)",
  "chrono 0.4.7 (registry+https://github.com/rust-lang/crates.io-index)",
