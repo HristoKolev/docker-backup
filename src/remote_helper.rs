@@ -157,8 +157,8 @@ pub fn clear_remote_cache(archive_type: &ArchiveType) -> Result {
 
 fn is_permanent(metadata: &RemoteArchiveMetadata) -> bool {
 
-    metadata.archive_metadata.archive_date.day() != 1
-        && metadata.archive_metadata.archive_date.day() != 15
+    metadata.archive_metadata.archive_date.day() == 1
+        || metadata.archive_metadata.archive_date.day() == 15
 }
 
 fn are_permanent_archives_enabled(metadata: &RemoteArchiveMetadata) -> bool {
