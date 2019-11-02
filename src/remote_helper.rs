@@ -118,9 +118,9 @@ pub fn clear_remote_cache(archive_type: &ArchiveType) -> Result {
 
     log!("Clearing remote cache...");
 
-    let archives = list_remote_archives(Some(archive_type))?;
+    let all_archives = list_remote_archives(Some(archive_type))?;
 
-    let map: HashMap<String, Vec<_>> = archives.into_iter()
+    let map: HashMap<String, Vec<_>> = (&all_archives).into_iter()
         .filter(|x| x.archive_metadata.archive_date < (*app_start_time() - Duration::days(x.remote_config.cache_expiry_days)))
         .filter(|x| !are_permanent_archives_enabled(x) || !is_permanent(x))
         .order_by(|x| x.archive_metadata.archive_date)
@@ -133,7 +133,7 @@ pub fn clear_remote_cache(archive_type: &ArchiveType) -> Result {
             .filter_first(|x|x.remote_name == remote_name)
             .or_error(&format!("No remote found with this name. Name: {}", remote_name))?;
 
-        let take_count = if ((archives.len() as i32) - remote_config.min_archive_count) < 0 {0} else {((archives.len() as i32) - remote_config.min_archive_count)};
+        let take_count = if ((all_archives.len() as i32) - remote_config.min_archive_count) < 0 {0} else {((all_archives.len() as i32) - remote_config.min_archive_count)};
 
         let for_delete = archives
             .into_iter()
