@@ -96,11 +96,11 @@ pub fn create_archive<F>(options: CreateArchiveOptions, func: F) -> Result<Optio
         func(&options.archive_type.get_config_name(), &uncompressed)?;
 
         let compressed = work_path
-            .join("compressed-archive.rar")
+            .join("compressed-archive.tar.gz")
             .get_as_string()?;
 
         bash_exec!(
-            "cd {} && rar a -m{} -ma5 -ow -ol -t -r -idq {} ./",
+            "cd {} && tar cf - . | pigz -{} > {}",
             uncompressed,
             archive_config.rar_compression_level,
             compressed
@@ -162,7 +162,7 @@ pub fn restore_archive<F>(options: RestoreArchiveOptions, func: F) -> Result
         let encrypted = options.file_path.get_as_string()?;
 
         let compressed = work_path
-            .join("compressed-archive.rar")
+            .join("compressed-archive.tar.gz")
             .get_as_string()?;
 
         if options.no_decryption {
@@ -299,7 +299,7 @@ pub fn unpack_archive(options: UnpackArchiveOptions) -> Result {
         let encrypted = options.file_path.get_as_string()?;
 
         let compressed = work_path
-            .join("compressed-archive.rar")
+            .join("compressed-archive.tar.gz")
             .get_as_string()?;
 
         if options.no_decryption {
@@ -311,7 +311,7 @@ pub fn unpack_archive(options: UnpackArchiveOptions) -> Result {
         let out_path = options.out_path.get_as_string()?;
 
         bash_exec!(
-            "mkdir -p {0} && cd {0} && unrar x -idq {1} ./",
+            "mkdir -p {0} && cd {0} && tar -xf {1}",
             &out_path,
             &compressed
         );

@@ -51,7 +51,7 @@ pub fn restore_docker_volumes_archive(config_name: &str, _work_path: &str, compr
 
     bash_exec!("rm {0} -rf && mkdir -p {0}", &config.volumes_path);
 
-    bash_exec!("cd {} && unrar x -idq {} ./", &config.volumes_path, &compressed);
+    bash_exec!("cd {} && tar -xf {}", &config.volumes_path, &compressed);
 
     bash_exec!("systemctl start docker");
 
